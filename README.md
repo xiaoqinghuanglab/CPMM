@@ -59,13 +59,14 @@ df_abnormal_only <- read.csv("./data/df_abnormal_only_toy.csv")
 df_status_change <- read.csv("./data/df_status_change_toy.csv")
 df_pathway <- read.csv("./data/toy_pathways.csv")
 
+proteins <- colnames(df_normal_only)[9:27]
 
 # Fit change-point linear mixed models across proteins
 results <- fit_cplmm_all_proteins(
   df_status_change = df_status_change,
   df_normal = df_normal_only,
   df_abnormal = df_abnormal_only,
-  protein_list = c("P1", "P2", "P3"),
+  protein_list = proteins,
   covariates = c("SEX", "BASELINE_AGE"),
   subject_id_col = "SUBID",                     
   years_since_onset_col = "years_since_onset"
@@ -100,7 +101,7 @@ results <- fit_cplmm_all_proteins(
   df_status_change = df_status_change,
   df_normal = df_normal_only,
   df_abnormal = df_abnormal_only,
-  protein_list = c("P1","P2","P3"),
+  protein_list = proteins,
   covariates = c("SEX","BASELINE_AGE"),
   subject_id_col = "SUBID",
   years_since_onset_col = "years_since_onset"
@@ -139,7 +140,7 @@ expr_df <- prepare_combined_expression(
   df_status_change = df_status_change,
   df_abnormal_only = df_abnormal_only,
   df_all = df_all,
-  subset_genes = c("P1","P2","P3"),
+  subset_genes = proteins,
   category_col = "CATEGORY",
   categories = c("Normal","MCI","AD Dementia"),
   normal_label = "Normal_only",
@@ -173,6 +174,7 @@ plot_cplmm(
   years_since_onset_col = "years_since_onset"
 )
 ```
+![Protein Trajectories](./assets/cplmm_plot.svg)
 
 ### Volcano Plot
 
@@ -184,6 +186,7 @@ plot_wald_volcano(
   annotate = TRUE
 )
 ```
+![Volcano Plot](./assets/volcano.svg)
 
 ### Quadrant Plot
 
@@ -196,18 +199,20 @@ plot_quadrant_beta(
   annotate = TRUE
 )
 ```
+![Quadrant Plot](./assets/quadrant.svg)
 
 ### Expression Boxplots
 
 ``` r
 plot_expression_boxplot(
   expr_df,
-  gene_order = c("P1","P2","P3"),  # genes/proteins of interest
+  gene_order = proteins,  # genes/proteins of interest
   hue_col = "Source",
   expression_col = "Expression",
   gene_col = "Gene"
 )
 ```
+![Expression Plot](./assets/expr.svg)
 
 ## Pathway Analysis
 
@@ -229,7 +234,7 @@ Pathway analysis requires a data frame with the following columns:
 
 ``` r
 plot_pathway_bubble(
-  df = path_df,
+  df = df_pathway,
   pathway_col = "Cleaned_Pathway",
   category_col = "Category",
   source_col = "Source",
@@ -239,24 +244,26 @@ plot_pathway_bubble(
   size_scale = 15  # maximum bubble size
 )
 ```
+![Bubble Plot](./assets/bubble.svg)
 
 #### Heatmap
 
 ``` r
 plot_pathway_gene_heatmap(
-  df = path_df,
+  df = df_pathway,
   pathway_col = "Cleaned_Pathway",
   category_col = "Category",
   gene_col = "Gene",
   title = "Pathway–Gene Membership Heatmap"
 )
 ```
+![Heatmap Plot](./assets/heatmap.svg)
 
 #### Top Pathways Bar Plot
 
 ``` r
 plot_top_pathways_bar(
-  df = path_df,
+  df = df_pathway,
   pathway_col = "Cleaned_Pathway",
   gene_col = "Gene",
   logq_col = "LogQValue",         # logq (or logp) column
@@ -265,6 +272,7 @@ plot_top_pathways_bar(
   annotate = TRUE                 # annotate with logq (or logp) values if available
 )
 ```
+![Bar Plot](./assets/bar.svg)
 
 ## Survival Analysis
 
@@ -273,13 +281,14 @@ Compute time-to-threshold events per subject and plot Kaplan-Meier curves:
 ``` r
 plot_km_with_threshold(
   biomarker_name = "P1",    # protein of choice
-  threshold = 12,           # user defined threshold value
+  threshold = 3,           # user defined threshold value
   wd_df = df_status_change,           # Status change data
   normal_df = df_normal_only,    # Normal only data
   abnm_df = df_abnormal_only,       # Abnormal only data
   time_points = seq(-6, 6, by = 2)  # user defined timepoints for x-axis for better visualization
 )
 ```
+![Survival Plot](./assets/survival.svg)
 
 ## Data Preprocessing
 
@@ -391,4 +400,5 @@ For detailed function documentation, use:
 ## Contact
 
 [Add contact information here]
+
 
