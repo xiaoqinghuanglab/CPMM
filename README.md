@@ -1,6 +1,6 @@
 # CPLMM: Longitudinal Plasma Proteomics Analysis Package
 
-**CPLMM** is designed for **longitudinal plasma proteomics analysis**, with a special focus on modeling disease onset and progression (e.g., Alzheimer's disease). It integrates preprocessing, change-point mixed models, statistical tests, survival analysis, and publication-style visualization.
+**RPackage** is designed for **longitudinal plasma proteomics analysis**, with a special focus on modeling disease onset and progression (e.g., Alzheimer's disease). It integrates preprocessing, change-point mixed models, statistical tests, survival analysis, and publication-style visualization.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@
 -   [Survival Analysis](#survival-analysis)
 -   [Function Reference](#function-reference)
 
-## Installation
+## Installation {#installation}
 
 ``` r
 # Install from GitHub 
@@ -22,7 +22,7 @@ devtools::install_github("xiaoqinghuanglab/CPLMM")
 library(CPLMM)
 ```
 
-## Data Requirements
+## Data Requirements {#data-requirements}
 
 ### Input Data Structure
 
@@ -43,16 +43,22 @@ Most functions expect longitudinal data frames with the following columns:
 -   `df_abnormal_only` - CSV file with abnormal only patients
 -   `df_status_change` - CSV file with patients who converted from Normal to Abnormal
 
-## Quick Start
+All the data frames must contain same numbers of proteins
+
+## Quick Start {#quick-start}
+
+This Code shows how to get started with fitting the model for all the proteins/genes, visualize them and run Wald test on the results for a toy dataet
 
 ``` r
-library(CPLMM)
+library(RPackage)
 
 # Load your data
-df_all <- read.csv("path/to/df_all.csv")
-df_normal_only <- read.csv("path/to/df_normal_only.csv")
-df_abnormal_only <- read.csv("path/to/df_abnormal_only.csv")
-df_status_change <- read.csv("path/to/df_status_change.csv")
+df_all <- read.csv("./data/df_all_toy.csv")
+df_normal_only <- read.csv("./data/df_normal_only_toy.csv")
+df_abnormal_only <- read.csv("./data/df_abnormal_only_toy.csv")
+df_status_change <- read.csv("./data/df_status_change_toy.csv")
+df_pathway <- read.csv("./data/toy_pathways.csv")
+
 
 # Fit change-point linear mixed models across proteins
 results <- fit_cplmm_all_proteins(
@@ -61,6 +67,15 @@ results <- fit_cplmm_all_proteins(
   df_abnormal = df_abnormal_only,
   protein_list = c("P1", "P2", "P3"),
   covariates = c("SEX", "BASELINE_AGE"),
+  subject_id_col = "SUBID",                     
+  years_since_onset_col = "years_since_onset"
+)
+
+# Visualize Individual Proteins
+plot_cplmm(
+  df_status_change, df_normal_only, df_abnormal_only,
+  protein = "P1",                                     # protein/gene of inerest
+  covariates = c("SEX","BASELINE_AGE"),
   subject_id_col = "SUBID",
   years_since_onset_col = "years_since_onset"
 )
@@ -69,12 +84,208 @@ results <- fit_cplmm_all_proteins(
 wald <- compute_wald_test(
   results_df = results,
   adjust_p = TRUE,
-  rank_by = 1,
-  alpha = 0.05
+  rank_by = 1,                   # 1 to rank by Beta 1 and Beta 3; 2 to rank by Beta 2 and Beta 4
+  alpha = 0.05                   # User defined threshold
 )
 ```
 
-## Data Preprocessing
+## Statistical Modeling {#statistical-modeling}
+
+### Change-Point Linear Mixed Models (CPLMM)
+
+The `fit_cplmm_all_proteins()` function estimates slopes before and after onset for status-change subjects and single-slope models for normal-only/abnormal-only groups:
+
+``` r
+results <- fit_cplmm_all_proteins(
+  df_status_change = df_status_change,
+  df_normal = df_normal_only,
+  df_abnormal = df_abnormal_only,
+  protein_list = c("P1","P2","P3"),
+  covariates = c("SEX","BASELINE_AGE"),
+  subject_id_col = "SUBID",
+  years_since_onset_col = "years_since_onset"
+)
+```
+
+#### Result Columns:
+
+-   **Beta 1, SE Beta 1** = pre-onset slope & SE (status-change)
+-   **Beta 3, SE Beta 3** = post-onset slope & SE (status-change)
+-   **Beta 2, SE Beta 2** = slope & SE in normal-only
+-   **Beta 4, SE Beta 4** = slope & SE in abnormal-only
+-   Model metrics (AIC, BIC, MSE) per group
+
+### Wald Test
+
+Find proteins with significant slope changes:
+
+``` r
+wald <- compute_wald_test(
+  results_df = results,
+  adjust_p = TRUE,    # BH FDR correction
+  rank_by = 1,        # rank by P-value 1 (status-change pre vs post); enter 2 to rank by P-value 2 (noraml vs abnormal)
+  alpha = 0.05        # User defined threshold
+)
+```
+
+### Mann-Whitney U Test
+
+Compare distributions within categories:
+
+``` r
+# Prepare combined expression data frame
+expr_df <- prepare_combined_expression(
+  df_normal_only = df_normal_only,
+  df_status_change = df_status_change,
+  df_abnormal_only = df_abnormal_only,
+  df_all = df_all,
+  subset_genes = c("P1","P2","P3"),
+  category_col = "CATEGORY",
+  categories = c("Normal","MCI","AD Dementia"),
+  normal_label = "Normal_only",
+  status_label = "Status_change",
+  abnormal_label = "Abnormal_only"
+)
+
+# Perform Mann-Whitney U test
+mw <- compare_groups_mannwhitney(
+  combined_expr = expr_df,
+  gene_list = c("P1","P2","P3"),
+  group1 = "Normal_only",
+  group2 = "MCI",
+  alpha = 0.05,
+  rank_by = "FDR"
+)
+```
+
+## Visualization {#visualization}
+
+### CPLMM Trajectory Plots
+
+Visualize protein trajectories for proteins of interest:
+
+``` r
+plot_cplmm(
+  df_status_change, df_normal_only, df_abnormal_only,
+  protein = "P1",                                     # protein/gene of inerest
+  covariates = c("SEX","BASELINE_AGE"),
+  subject_id_col = "SUBID",
+  years_since_onset_col = "years_since_onset"
+)
+```
+
+![](http://127.0.0.1:26305/graphics/7b4b49cb-1f40-436c-aea9-de1a1555861f.png)
+
+### Volcano Plot
+
+``` r
+plot_wald_volcano(
+  wald_df = wald,
+  pval_col = "P-value 1",
+  fdr_col = "Adjusted P-value 1",
+  annotate = TRUE
+)
+```
+
+### Quadrant Plot
+
+``` r
+plot_quadrant_beta(
+  wald_df = wald,
+  beta_x_col = "Beta 1",
+  beta_y_col = "Beta 3",
+  fdr_col = "Adjusted P-value 1",
+  annotate = TRUE
+)
+```
+
+### Expression Boxplots
+
+``` r
+plot_expression_boxplot(
+  expr_df,
+  gene_order = c("P1","P2","P3"),  # genes/proteins of interest
+  hue_col = "Source",
+  expression_col = "Expression",
+  gene_col = "Gene"
+)
+```
+
+## Pathway Analysis {#pathway-analysis}
+
+### Data Requirements
+
+Pathway analysis requires a data frame with the following columns:
+
+-   `Pathway` - Pathway Names
+-   `Gene` - Gene Enriched by the Pathway
+-   `Source` - The tool used for enrichment (e.g., DAVID, Metascape)
+-   `CategoryGroup` - Category of the Pathway provided by the tool
+-   `LogQValues` - Log Q or Log P values of the pathways
+-   `Cleaned Pathway` - Cleaned Pathway names for better readability
+-   `Category` - Category Name to categorize the pathways (manually defined)
+
+### Pathway Visualization
+
+#### Bubble Plot
+
+``` r
+plot_pathway_bubble(
+  df = path_df,
+  pathway_col = "Cleaned_Pathway",
+  category_col = "Category",
+  source_col = "Source",
+  logq_col = "LogQValue",
+  gene_col = "Gene",
+  title = "Pathway Enrichment by Source",
+  size_scale = 15  # maximum bubble size
+)
+```
+
+#### Heatmap
+
+``` r
+plot_pathway_gene_heatmap(
+  df = path_df,
+  pathway_col = "Cleaned_Pathway",
+  category_col = "Category",
+  gene_col = "Gene",
+  title = "Pathway–Gene Membership Heatmap"
+)
+```
+
+#### Top Pathways Bar Plot
+
+``` r
+plot_top_pathways_bar(
+  df = path_df,
+  pathway_col = "Cleaned_Pathway",
+  gene_col = "Gene",
+  logq_col = "LogQValue",         # logq (or logp) column
+  category_col = "Category",
+  top_n = 6,                      # number of pathways in the plot
+  annotate = TRUE                 # annotate with logq (or logp) values if available
+)
+```
+
+## Survival Analysis {#survival-analysis}
+
+Compute time-to-threshold events per subject and plot Kaplan-Meier curves:
+
+``` r
+plot_km_with_threshold(
+  biomarker_name = "P1",    # protein of choice
+  threshold = 12,           # user defined threshold value
+  wd_df = df_status_change,           # Status change data
+  normal_df = df_normal_only,    # Normal only data
+  abnm_df = df_abnormal_only,       # Abnormal only data
+  time_points = seq(-6, 6, by = 2)  # user defined timepoints for x-axis for better visualization
+)
+```
+
+## Data Preprocessing {#data-preprocessing}
+
+These functions can be used to get `years_since_onset`, setting onset age for normal patients, correcting onset age and status to make a unidirectional flow and to separate status change patients from the data. It is not an requirement to run these function when using the toy dataset as the required columns are alredy present in the dataset.
 
 ### Calculate Years Since Onset
 
@@ -142,199 +353,7 @@ identify_status_change_subjects(
 )
 ```
 
-## Statistical Modeling
-
-### Change-Point Linear Mixed Models (CPLMM)
-
-The `fit_cplmm_all_proteins()` function estimates slopes before and after onset for status-change subjects and single-slope models for normal-only/abnormal-only groups:
-
-``` r
-results <- fit_cplmm_all_proteins(
-  df_status_change = df_status_change,
-  df_normal = df_normal_only,
-  df_abnormal = df_abnormal_only,
-  protein_list = c("P1","P2","P3"),
-  covariates = c("SEX","BASELINE_AGE"),
-  subject_id_col = "SUBID",
-  years_since_onset_col = "years_since_onset"
-)
-```
-
-#### Result Columns:
-
--   **Beta 1, SE Beta 1** = pre-onset slope & SE (status-change)
--   **Beta 3, SE Beta 3** = post-onset slope & SE (status-change)
--   **Beta 2, SE Beta 2** = slope & SE in normal-only
--   **Beta 4, SE Beta 4** = slope & SE in abnormal-only
--   Model metrics (AIC, BIC, MSE) per group
-
-### Wald Test
-
-Find proteins with significant slope changes:
-
-``` r
-wald <- compute_wald_test(
-  results_df = results,
-  adjust_p = TRUE,    # BH FDR correction
-  rank_by = 1,        # rank by P-value 1 (status-change pre vs post)
-  alpha = 0.05
-)
-```
-
-### Mann-Whitney U Test
-
-Compare distributions within categories:
-
-``` r
-# Prepare combined expression data frame
-expr_df <- prepare_combined_expression(
-  df_normal_only = df_normal_only,
-  df_status_change = df_status_change,
-  df_abnormal_only = df_abnormal_only,
-  df_all = df_all,
-  subset_genes = c("P1","P2","P3"),
-  category_col = "CATEGORY",
-  categories = c("Normal","MCI","AD Dementia"),
-  normal_label = "Normal_only",
-  status_label = "Status_change",
-  abnormal_label = "Abnormal_only"
-)
-
-# Perform Mann-Whitney U test
-mw <- compare_groups_mannwhitney(
-  combined_expr = expr_df,
-  gene_list = c("P1","P2","P3"),
-  group1 = "Normal_only",
-  group2 = "MCI",
-  alpha = 0.05,
-  rank_by = "FDR"
-)
-```
-
-## Visualization
-
-### CPLMM Trajectory Plots
-
-Visualize protein trajectories for proteins of interest:
-
-``` r
-plot_cplmm(
-  df_status_change, df_normal_only, df_abnormal_only,
-  protein = "P1",
-  covariates = c("SEX","BASELINE_AGE"),
-  subject_id_col = "SUBID",
-  years_since_onset_col = "years_since_onset"
-)
-```
-
-### Volcano Plot
-
-``` r
-plot_wald_volcano(
-  wald_df = wald,
-  pval_col = "P-value 1",
-  fdr_col = "Adjusted P-value 1",
-  annotate = TRUE
-)
-```
-
-### Quadrant Plot
-
-``` r
-plot_quadrant_beta(
-  wald_df = wald,
-  beta_x_col = "Beta 1",
-  beta_y_col = "Beta 3",
-  fdr_col = "Adjusted P-value 1",
-  annotate = TRUE
-)
-```
-
-### Expression Boxplots
-
-``` r
-plot_expression_boxplot(
-  expr_df,
-  gene_order,  # genes/proteins of interest
-  hue_col = "Source",
-  expression_col = "Expression",
-  gene_col = "Gene"
-)
-```
-
-## Pathway Analysis
-
-### Data Requirements
-
-Pathway analysis requires a data frame with the following columns:
-
--   `Pathway` - Pathway Names
--   `Gene` - Gene Enriched by the Pathway
--   `Source` - The tool used for enrichment (e.g., DAVID, Metascape)
--   `CategoryGroup` - Category of the Pathway provided by the tool
--   `LogQValues` - Log Q or Log P values of the pathways
--   `Cleaned Pathway` - Cleaned Pathway names for better readability
--   `Category` - Category Name to categorize the pathways (manually defined)
-
-### Pathway Visualization
-
-#### Bubble Plot
-
-``` r
-plot_pathway_bubble(
-  df = path_df,
-  pathway_col = "Cleaned_Pathway",
-  category_col = "Category",
-  source_col = "Source",
-  logq_col = "LogQValue",
-  gene_col = "Gene",
-  title = "Pathway Enrichment by Source",
-  size_scale = 15  # maximum bubble size
-)
-```
-
-#### Heatmap
-
-``` r
-plot_pathway_gene_heatmap(
-  df = dplyr::select(path_df, Cleaned_Pathway, BioCategory_Manual, Gene),
-  pathway_col = "Cleaned_Pathway",
-  category_col = "Category",
-  gene_col = "Gene",
-  title = "Pathway–Gene Membership Heatmap"
-)
-```
-
-#### Top Pathways Bar Plot
-
-``` r
-plot_top_pathways_bar(
-  df = path_df,
-  pathway_col = "Cleaned_Pathway",
-  gene_col = "Gene",
-  logq_col = "LogQValue",
-  category_col = "Category_Manual",
-  top_n = 6,        # number of pathways in the plot
-  annotate = TRUE   # annotate with logq values
-)
-```
-
-## Survival Analysis
-
-Compute time-to-threshold events per subject and plot Kaplan-Meier curves:
-
-``` r
-plot_km_with_threshold(
-  biomarker_name = "P1",    # protein of choice
-  threshold = 12,           # threshold value
-  wd_df = wd_df,           # Status change data
-  normal_df = normal_df,    # Normal only data
-  abnm_df = abnm_df,       # Abnormal only data
-  time_points = seq(-6, 6, by = 2)  # timepoints for x-axis
-)
-```
-
-## Function Reference
+## Function Reference {#function-reference}
 
 ### Data Requirements by Function Type
 
@@ -359,15 +378,18 @@ For detailed function documentation, use:
 # ... and other function names
 ```
 
+## License
+
+[Add your license information here]
 
 ## Citation
 
-[Later]
+[Add citation information here]
 
 ## Contributing
 
-Contributors: Aatman Vasoya, Xiaoqing Huang
+[Add contributing guidelines here]
 
 ## Contact
 
-Corresponding: Xiaoqing Huang, huanxi@iu.edu
+[Add contact information here]
