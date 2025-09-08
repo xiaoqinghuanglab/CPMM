@@ -14,7 +14,7 @@
 -   [Survival Analysis](#survival-analysis)
 -   [Function Reference](#function-reference)
 
-## Installation {#installation}
+## Installation
 
 ``` r
 # Install from GitHub 
@@ -22,7 +22,7 @@ devtools::install_github("xiaoqinghuanglab/CPLMM")
 library(CPLMM)
 ```
 
-## Data Requirements {#data-requirements}
+## Data Requirements
 
 ### Input Data Structure
 
@@ -45,7 +45,7 @@ Most functions expect longitudinal data frames with the following columns:
 
 All the data frames must contain same numbers of proteins
 
-## Quick Start {#quick-start}
+## Quick Start
 
 This Code shows how to get started with fitting the model for all the proteins/genes, visualize them and run Wald test on the results for a toy dataet
 
@@ -89,7 +89,7 @@ wald <- compute_wald_test(
 )
 ```
 
-## Statistical Modeling {#statistical-modeling}
+## Statistical Modeling
 
 ### Change-Point Linear Mixed Models (CPLMM)
 
@@ -158,7 +158,7 @@ mw <- compare_groups_mannwhitney(
 )
 ```
 
-## Visualization {#visualization}
+## Visualization
 
 ### CPLMM Trajectory Plots
 
@@ -173,8 +173,6 @@ plot_cplmm(
   years_since_onset_col = "years_since_onset"
 )
 ```
-
-![](http://127.0.0.1:26305/graphics/7b4b49cb-1f40-436c-aea9-de1a1555861f.png)
 
 ### Volcano Plot
 
@@ -211,7 +209,7 @@ plot_expression_boxplot(
 )
 ```
 
-## Pathway Analysis {#pathway-analysis}
+## Pathway Analysis
 
 ### Data Requirements
 
@@ -268,7 +266,7 @@ plot_top_pathways_bar(
 )
 ```
 
-## Survival Analysis {#survival-analysis}
+## Survival Analysis
 
 Compute time-to-threshold events per subject and plot Kaplan-Meier curves:
 
@@ -283,7 +281,7 @@ plot_km_with_threshold(
 )
 ```
 
-## Data Preprocessing {#data-preprocessing}
+## Data Preprocessing
 
 These functions can be used to get `years_since_onset`, setting onset age for normal patients, correcting onset age and status to make a unidirectional flow and to separate status change patients from the data. It is not an requirement to run these function when using the toy dataset as the required columns are alredy present in the dataset.
 
@@ -393,3 +391,4 @@ For detailed function documentation, use:
 ## Contact
 
 [Add contact information here]
+
