@@ -21,7 +21,7 @@
 devtools::install_github("xiaoqinghuanglab/CPLMM")
 library(CPLMM)
 ```
-If facing Issues You can download the tat.gz file from the zip folder then run this code
+If facing Issues You can download the tar.gz file from the zip folder then run this code
 ```r
 install.packages("C:/path/CPLMM_0.0.0.9000.tar.gz", repos = NULL, type = "source")
 ```
@@ -405,6 +405,7 @@ For detailed function documentation, use:
 ## Contact
 
 [Add contact information here]
+
 
 
 
