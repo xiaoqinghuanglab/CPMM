@@ -5,7 +5,7 @@
 #' Optionally applies BH-FDR to each set of p-values, ranks results by the chosen
 #' (adjusted) p-value, and flags significance at \code{alpha}.
 #'
-#' @param results_df A data.frame/tibble from \code{fit_cplmm_all_proteins()}
+#' @param results_df A data.frame/tibble from \code{fit_cpmm_all_proteins()}
 #'   containing columns: \code{Protein}, \code{Beta 1}, \code{SE Beta 1},
 #'   \code{Beta 2}, \code{SE Beta 2}, \code{Beta 3}, \code{SE Beta 3},
 #'   \code{Beta 4}, \code{SE Beta 4}.
