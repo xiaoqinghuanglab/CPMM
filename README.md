@@ -22,6 +22,21 @@ devtools::install_github("xiaoqinghuanglab/CPLMM")
 library(CPMM)
 ```
 
+The package can also be installed usinf the tar.gz file from the zip folder
+```r
+install.packages("path/to/CPMM_0.0.0.9000.tar.gz", repos = NULL, type = "source")
+library(CPMM)
+```
+Installing via RStudio GUI
+- Go to Tools → Install Packages
+
+- Set "Install from" to Package Archive File (.zip, .tar.gz)
+
+- Locate and select your .tar.gz file
+
+- Click Install
+
+
 ## Data Requirements
 
 ### Input Data Structure
@@ -400,6 +415,7 @@ For detailed function documentation, use:
 ## Contact
 
 [Add contact information here]
+
 
 
 
