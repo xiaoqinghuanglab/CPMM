@@ -1,11 +1,12 @@
-Package: CPLMM
+Package: CPMM
 Title: Change Point Linear Mixed Effect Model
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+    person(given = "Aatman", family = "Vasoya", email = "vasoya.aatman@gmail.com", role = c("aut", "cre"))
+Description: Tools to preprocess longitudinal datasets, fit change-point mixed models
+    around disease onset, run Wald / Mann-Whitney tests, Kaplan-Meier threshold analyses,
+    and generate publication-ready visualizations.
+License: `use_mit_license()`, `use_gpl3_license()`
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

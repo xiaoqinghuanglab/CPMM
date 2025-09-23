@@ -1,24 +1,9 @@
-# RStudio / R
 .Rproj.user
+inst/doc
+/doc/
+/Meta/
 .Rhistory
-.RData
-.Ruserdata
-
-# Package build artifacts
-*.Rcheck/
-*.tar.gz
-src/*.o
-src/*.so
-src/*.dll
-
-# Built docs (reproducible from sources)
-doc/
-Meta/
-inst/doc/
-
-# pkgdown site (only include if you actually host via gh-pages)
-docs/
-
-# OS cruft
+.Rdata
+.httr-oauth
 .DS_Store
-Thumbs.db
+.quarto

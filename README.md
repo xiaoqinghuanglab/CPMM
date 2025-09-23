@@ -1,4 +1,4 @@
-# CPLMM: Longitudinal Plasma Proteomics Analysis Package
+# CPMM: Longitudinal Plasma Proteomics Analysis Package
 
 **RPackage** is designed for **longitudinal plasma proteomics analysis**, with a special focus on modeling disease onset and progression (e.g., Alzheimer's disease). It integrates preprocessing, change-point mixed models, statistical tests, survival analysis, and publication-style visualization.
 
@@ -19,13 +19,8 @@
 ``` r
 # Install from GitHub 
 devtools::install_github("xiaoqinghuanglab/CPLMM")
-library(CPLMM)
+library(CPMM)
 ```
-If facing Issues You can download the tar.gz file from the zip folder then run this code
-```r
-install.packages("C:/path/CPLMM_0.0.0.9000.tar.gz", repos = NULL, type = "source")
-```
-
 
 ## Data Requirements
 
@@ -66,8 +61,8 @@ df_pathway <- read.csv("./data/toy_pathways.csv")
 
 proteins <- colnames(df_normal_only)[9:27]
 
-# Fit change-point linear mixed models across proteins
-results <- fit_cplmm_all_proteins(
+# Fit change-point mixed models across proteins
+results <- fit_cpmm_all_proteins(
   df_status_change = df_status_change,
   df_normal = df_normal_only,
   df_abnormal = df_abnormal_only,
@@ -78,7 +73,7 @@ results <- fit_cplmm_all_proteins(
 )
 
 # Visualize Individual Proteins
-plot_cplmm(
+plot_cpmm(
   df_status_change, df_normal_only, df_abnormal_only,
   protein = "P1",                                     # protein/gene of inerest
   covariates = c("SEX","BASELINE_AGE"),
@@ -97,12 +92,12 @@ wald <- compute_wald_test(
 
 ## Statistical Modeling
 
-### Change-Point Linear Mixed Models (CPLMM)
+### Change-Point Mixed Models (CPMM)
 
-The `fit_cplmm_all_proteins()` function estimates slopes before and after onset for status-change subjects and single-slope models for normal-only/abnormal-only groups:
+The `fit_cpmm_all_proteins()` function estimates slopes before and after onset for status-change subjects and single-slope models for normal-only/abnormal-only groups:
 
 ``` r
-results <- fit_cplmm_all_proteins(
+results <- fit_cpmm_all_proteins(
   df_status_change = df_status_change,
   df_normal = df_normal_only,
   df_abnormal = df_abnormal_only,
@@ -166,12 +161,12 @@ mw <- compare_groups_mannwhitney(
 
 ## Visualization
 
-### CPLMM Trajectory Plots
+### CPMM Trajectory Plots
 
 Visualize protein trajectories for proteins of interest:
 
 ``` r
-plot_cplmm(
+plot_cpmm(
   df_status_change, df_normal_only, df_abnormal_only,
   protein = "P1",                                     # protein/gene of inerest
   covariates = c("SEX","BASELINE_AGE"),
@@ -372,7 +367,7 @@ identify_status_change_subjects(
 -   **Longitudinal frames** (df_status_change, df_normal_only, df_abnormal_only):
     -   Columns: SUBID, years_since_onset, covariates (e.g., SEX, BASELINE_AGE), and protein columns (numeric)
     -   Optional: PROCEDURE_AGE, ONSET_AGE if you need to compute years_since_onset
--   **CPLMM results** for Wald (results):
+-   **CPMM results** for Wald (results):
     -   Columns: Protein, Beta 1, SE Beta 1, Beta 3, SE Beta 3, Beta 2, SE Beta 2, Beta 4, SE Beta 4
 -   **Expression long table** (expr_df):
     -   Columns: Gene, Expression, Source
@@ -384,7 +379,7 @@ identify_status_change_subjects(
 For detailed function documentation, use:
 
 ``` r
-?fit_cplmm_all_proteins
+?fit_cpmm_all_proteins
 ?plot_wald_volcano
 ?compute_wald_test
 # ... and other function names
@@ -405,7 +400,5 @@ For detailed function documentation, use:
 ## Contact
 
 [Add contact information here]
-
-
 
 

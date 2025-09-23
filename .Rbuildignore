@@ -1,13 +1,5 @@
-^.*\.Rproj$
+^RPackage\.Rproj$
 ^\.Rproj\.user$
-^\.git$
-^\.github$
 ^README\.Rmd$
-^README_files$
-^docs$
-^pkgdown\.yml$
-^data-raw$
-^renv$
-^renv\.lock$
 ^doc$
 ^Meta$
