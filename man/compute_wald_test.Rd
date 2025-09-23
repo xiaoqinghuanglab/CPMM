@@ -7,7 +7,7 @@
 compute_wald_test(results_df, adjust_p = TRUE, rank_by = 1, alpha = 0.05)
 }
 \arguments{
-\item{results_df}{A data.frame/tibble from \code{fit_cplmm_all_proteins()}
+\item{results_df}{A data.frame/tibble from \code{fit_cpmm_all_proteins()}
 containing columns: \code{Protein}, \code{Beta 1}, \code{SE Beta 1},
 \code{Beta 2}, \code{SE Beta 2}, \code{Beta 3}, \code{SE Beta 3},
 \code{Beta 4}, \code{SE Beta 4}.}
