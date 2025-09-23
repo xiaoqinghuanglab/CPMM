@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(CPLMM)
+library(CPMM)
 
 test_check("RPackage")
