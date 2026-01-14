@@ -12,6 +12,7 @@
 -   [Visualization](#visualization)
 -   [Pathway Analysis](#pathway-analysis)
 -   [Survival Analysis](#survival-analysis)
+-   [Predictive Modelling](#predictive-modelling)
 -   [Function Reference](#function-reference)
 
 ## Installation
@@ -22,7 +23,7 @@ devtools::install_github("xiaoqinghuanglab/CPLMM")
 library(CPMM)
 ```
 
-The package can also be installed usinf the tar.gz file from the zip folder
+The package can also be installed using the tar.gz file from the zip folder
 ```r
 install.packages("path/to/CPMM_0.0.0.9000.tar.gz", repos = NULL, type = "source")
 library(CPMM)
@@ -79,20 +80,17 @@ proteins <- colnames(df_normal_only)[9:27]
 # Fit change-point mixed models across proteins
 results <- fit_cpmm_all_proteins(
   df_status_change = df_status_change,
-  df_normal = df_normal_only,
-  df_abnormal = df_abnormal_only,
   protein_list = proteins,
   covariates = c("SEX", "BASELINE_AGE"),
   subject_id_col = "SUBID",                     
   years_since_onset_col = "years_since_onset"
 )
 
-# Visualize Individual Proteins
+# Visualize CPMM trajectory for a single protein
 plot_cpmm(
-  df_status_change, df_normal_only, df_abnormal_only,
-  protein = "P1",                                     # protein/gene of inerest
+  df_status_change,
+  protein = "P1",
   covariates = c("SEX","BASELINE_AGE"),
-  subject_id_col = "SUBID",
   years_since_onset_col = "years_since_onset"
 )
 
@@ -100,8 +98,7 @@ plot_cpmm(
 wald <- compute_wald_test(
   results_df = results,
   adjust_p = TRUE,
-  rank_by = 1,                   # 1 to rank by Beta 1 and Beta 3; 2 to rank by Beta 2 and Beta 4
-  alpha = 0.05                   # User defined threshold
+  alpha = 0.05             # User defined threshold
 )
 ```
 
@@ -109,13 +106,11 @@ wald <- compute_wald_test(
 
 ### Change-Point Mixed Models (CPMM)
 
-The `fit_cpmm_all_proteins()` function estimates slopes before and after onset for status-change subjects and single-slope models for normal-only/abnormal-only groups:
+The `fit_cpmm_all_proteins()` function estimates slopes before and after onset for status-change subjects:
 
 ``` r
 results <- fit_cpmm_all_proteins(
   df_status_change = df_status_change,
-  df_normal = df_normal_only,
-  df_abnormal = df_abnormal_only,
   protein_list = proteins,
   covariates = c("SEX","BASELINE_AGE"),
   subject_id_col = "SUBID",
@@ -125,10 +120,8 @@ results <- fit_cpmm_all_proteins(
 
 #### Result Columns:
 
--   **Beta 1, SE Beta 1** = pre-onset slope & SE (status-change)
--   **Beta 3, SE Beta 3** = post-onset slope & SE (status-change)
--   **Beta 2, SE Beta 2** = slope & SE in normal-only
--   **Beta 4, SE Beta 4** = slope & SE in abnormal-only
+-   **Beta 1, SE Beta 1** = pre-onset slope & SE
+-   **Beta 2, SE Beta 2** = post-onset slope & SE
 -   Model metrics (AIC, BIC, MSE) per group
 
 ### Wald Test
@@ -139,7 +132,6 @@ Find proteins with significant slope changes:
 wald <- compute_wald_test(
   results_df = results,
   adjust_p = TRUE,    # BH FDR correction
-  rank_by = 1,        # rank by P-value 1 (status-change pre vs post); enter 2 to rank by P-value 2 (noraml vs abnormal)
   alpha = 0.05        # User defined threshold
 )
 ```
@@ -151,16 +143,18 @@ Compare distributions within categories:
 ``` r
 # Prepare combined expression data frame
 expr_df <- prepare_combined_expression(
-  df_normal_only = df_normal_only,
-  df_status_change = df_status_change,
-  df_abnormal_only = df_abnormal_only,
-  df_all = df_all,
-  subset_genes = proteins,
-  category_col = "CATEGORY",
-  categories = c("Normal","MCI","AD Dementia"),
-  normal_label = "Normal_only",
-  status_label = "Status_change",
-  abnormal_label = "Abnormal_only"
+  inputs = list(
+    list(df = df_normal_only, label = "Normal_only"),
+    list(df = df_status_change, label = "Status_change"),
+    list(df = df_abnormal_only, label = "Abnormal_only"),
+    list(
+      df = df_all,
+      label = "MCI",
+      category_col = "CATEGORY",
+      categories = "MCI"
+    )
+  ),
+  subset_genes = proteins
 )
 
 # Perform Mann-Whitney U test
@@ -168,9 +162,7 @@ mw <- compare_groups_mannwhitney(
   combined_expr = expr_df,
   gene_list = c("P1","P2","P3"),
   group1 = "Normal_only",
-  group2 = "MCI",
-  alpha = 0.05,
-  rank_by = "FDR"
+  group2 = "MCI"
 )
 ```
 
@@ -182,7 +174,7 @@ Visualize protein trajectories for proteins of interest:
 
 ``` r
 plot_cpmm(
-  df_status_change, df_normal_only, df_abnormal_only,
+  df_status_change,
   protein = "P1",                                     # protein/gene of inerest
   covariates = c("SEX","BASELINE_AGE"),
   subject_id_col = "SUBID",
@@ -197,7 +189,6 @@ plot_cpmm(
 plot_wald_volcano(
   wald_df = wald,
   pval_col = "P-value 1",
-  fdr_col = "Adjusted P-value 1",
   annotate = TRUE
 )
 ```
@@ -209,8 +200,8 @@ plot_wald_volcano(
 plot_quadrant_beta(
   wald_df = wald,
   beta_x_col = "Beta 1",
-  beta_y_col = "Beta 3",
-  fdr_col = "Adjusted P-value 1",
+  beta_y_col = "Beta 2",
+  fdr_col = "Adjusted P-value",
   annotate = TRUE
 )
 ```
@@ -295,15 +286,39 @@ Compute time-to-threshold events per subject and plot Kaplan-Meier curves:
 
 ``` r
 plot_km_with_threshold(
-  biomarker_name = "P1",    # protein of choice
-  threshold = 3,           # user defined threshold value
-  wd_df = df_status_change,           # Status change data
-  normal_df = df_normal_only,    # Normal only data
-  abnm_df = df_abnormal_only,       # Abnormal only data
-  time_points = seq(-6, 6, by = 2)  # user defined timepoints for x-axis for better visualization
+  biomarker_name = "P1",
+  threshold = 3,
+  groups = list(
+    Normal = list(df = df_normal_only),
+    Status_change = list(df = df_status_change),
+    MCI = list(
+      df = df_status_change,
+      filter = CATEGORY == "MCI"
+    )
+  ),
+  time_points = seq(-6, 6, by = 2)
 )
+
 ```
 ![Survival Plot](./assets/survival.svg)
+
+## Predictive Modelling
+
+LASSO-Selected Logistic Regression with CV ROC
+
+```r
+roc_res <- plot_lasso_cv_roc(
+  df = df_mci,
+  protein_features = proteins,
+  covariates = c("PROCEDURE_AGE","Sex_bin"),
+  label_col = "label",
+  n_folds = 5,
+  title = "Cross-validated ROC"
+)
+
+roc_res$mean_auc
+roc_res$plot
+```
 
 ## Data Preprocessing
 
@@ -383,7 +398,7 @@ identify_status_change_subjects(
     -   Columns: SUBID, years_since_onset, covariates (e.g., SEX, BASELINE_AGE), and protein columns (numeric)
     -   Optional: PROCEDURE_AGE, ONSET_AGE if you need to compute years_since_onset
 -   **CPMM results** for Wald (results):
-    -   Columns: Protein, Beta 1, SE Beta 1, Beta 3, SE Beta 3, Beta 2, SE Beta 2, Beta 4, SE Beta 4
+    -   Columns: Protein, Beta 1, SE Beta 1, Beta 2, SE Beta 2
 -   **Expression long table** (expr_df):
     -   Columns: Gene, Expression, Source
 -   **Pathway table** (path_df):
@@ -400,21 +415,6 @@ For detailed function documentation, use:
 # ... and other function names
 ```
 
-## License
-
-[Add your license information here]
-
-## Citation
-
-[Add citation information here]
-
-## Contributing
-
-[Add contributing guidelines here]
-
-## Contact
-
-[Add contact information here]
 
 
 
