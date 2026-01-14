@@ -2,53 +2,42 @@
 % Please edit documentation in R/survival_km.R
 \name{plot_km_with_threshold}
 \alias{plot_km_with_threshold}
-\title{KM plot for biomarker threshold crossing (with log-rank and risk table)}
+\title{Flexible KM plot for biomarker threshold crossing}
 \usage{
 plot_km_with_threshold(
   biomarker_name,
   threshold,
-  wd_df,
-  normal_df,
-  abnm_df,
-  threshold_dict = NULL,
+  groups,
   save = FALSE,
   save_path = "Figures",
-  jama_palette = NULL,
+  palette = NULL,
   time_points = seq(-10, 4, by = 2)
 )
 }
 \arguments{
-\item{biomarker_name}{Character; biomarker column (e.g. "NFL").}
+\item{biomarker_name}{Character; biomarker column name.}
 
-\item{threshold}{Numeric; threshold for event definition.}
+\item{threshold}{Numeric; threshold defining event occurrence.}
 
-\item{wd_df}{Data frame of Status-Change subjects (must contain SUBID, PROCEDURE_AGE, ONSET_AGE, CATEGORY, biomarker).}
+\item{groups}{Named list defining groups. Each element must contain:
+\itemize{
+\item df: data.frame
+\item filter: (optional) logical expression evaluated within df
+}}
 
-\item{normal_df}{Data frame of Normal-only subjects.}
+\item{save}{Logical; save SVG output?}
 
-\item{abnm_df}{Data frame of Abnormal-only subjects (kept for parity; not plotted by default).}
+\item{save_path}{Directory to save plot.}
 
-\item{threshold_dict}{Optional; ignored (kept for parity with Python signature).}
+\item{palette}{Optional named vector of colors.}
 
-\item{save}{Logical; save the combined figure as SVG? Default FALSE.}
-
-\item{save_path}{Directory to save into if \code{save=TRUE}. Default "Figures".}
-
-\item{jama_palette}{Named character vector of colors; names should include
-"Status-Change", "Normal", "MCI". Defaults to JAMA-like palette.}
-
-\item{time_points}{Numeric vector of x tick labels (in years to onset) to show.
-Default: \code{seq(-10, 4, by = 2)} (matches Python's -10..+4).}
+\item{time_points}{Numeric vector of x-axis ticks.}
 }
 \value{
-A patchwork/ggplot object with the KM and risk-table stacked.
+A patchwork/ggplot object.
 }
 \description{
-Builds event data via \code{compute_event_df()} for three groups:
-Status-Change (all \code{wd_df}), Normal-only (\code{normal_df}), and MCI
-(subset of \code{wd_df} where \code{CATEGORY == "MCI"}). Fits KM curves,
-draws a vertical line at onset (0), annotates the Normal vs MCI log-rank
-p-value, and shows an at-risk table. Internally, times are shifted so they're
-non-negative (required by \pkg{survival}), but the x-axis shows the original
-requested time points.
+Allows user-defined 2- or 3-group Kaplan–Meier comparisons using
+arbitrary cohorts or filtered subsets. Performs a multivariate
+log-rank test across all supplied groups and shows an at-risk table.
 }

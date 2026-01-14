@@ -1,39 +1,33 @@
-#' Volcano plot for Wald test results
+#' Volcano plot for CPMM Wald test results
 #'
-#' Builds a volcano using signed \eqn{\log_2} fold-change between post- and pre-onset
-#' slopes (\code{beta_after_col / beta_before_col}) and \eqn{-\log_{10}(p)}.
-#' Points are colored by significance: \code{p < pval_threshold} \emph{and}
-#' \code{FDR < fdr_threshold}. You can optionally annotate significant proteins
-#' (or a custom list) and export in multiple formats.
+#' Builds a volcano plot using the signed slope difference
+#' \eqn{\Delta \beta = \beta_{after} - \beta_{before}} on the x-axis
+#' and \eqn{-\log_{10}(p)} on the y-axis.
 #'
-#' @param wald_df Data frame with Wald results (from \code{compute_wald_test()} or similar).
-#' @param pval_col Column with raw p-values. Default \code{"P-value 1"}.
-#' @param fdr_col Column with FDR-adjusted p-values. Default
-#'   \code{"Adjusted P-value (FDR)_1"}. If not found, common alternatives are tried
-#'   (e.g. \code{"Adjusted P-value 1"}, \code{"FDR"}).
-#' @param beta_before_col Column with slope before onset (β1). Default \code{"Beta 1"}.
-#' @param beta_after_col Column with slope after onset (β3). Default \code{"Beta 3"}.
+#' @param wald_df Data frame from \code{compute_wald_test()}.
+#' @param beta_before_col Column for pre-onset slope. Default \code{"Beta 1"}.
+#' @param beta_after_col Column for post-onset slope. Default \code{"Beta 2"}.
+#' @param pval_col Column with raw p-values. Default \code{"P-value"}.
+#' @param fdr_col Column with adjusted p-values. Default \code{"Adjusted P-value"}.
 #' @param protein_col Column with protein/gene names. Default \code{"Protein"}.
-#' @param pval_threshold Raw p-value cutoff for significance. Default \code{0.05}.
-#' @param fdr_threshold FDR cutoff for significance. Default \code{0.05}.
-#' @param annotate Logical; annotate points? Default \code{TRUE}.
-#' @param annotate_list Optional character vector of proteins to annotate; if \code{NULL}
-#'   and \code{annotate=TRUE}, annotates all points labeled "Significant".
-#' @param style_config Optional list of \pkg{ggplot2} theme overrides (e.g.,
-#'   \code{list(legend.position = "bottom")}).
-#' @param export Logical; save the plot? Default \code{FALSE}.
-#' @param export_dir Directory to save into. Default \code{"Figures"}.
-#' @param export_name Base filename (no extension). Default \code{"wald_volcano"}.
-#' @param export_formats Character vector of extensions, e.g. \code{c("pdf","svg")}.
+#' @param pval_threshold Raw p-value cutoff. Default \code{0.05}.
+#' @param fdr_threshold FDR cutoff. Default \code{0.05}.
+#' @param annotate Logical; annotate significant proteins? Default \code{TRUE}.
+#' @param annotate_list Optional vector of protein names to annotate.
+#' @param style_config Optional list of ggplot2 theme overrides.
+#' @param export Logical; save plot? Default \code{FALSE}.
+#' @param export_dir Directory to save files. Default \code{"Figures"}.
+#' @param export_name Base filename. Default \code{"wald_volcano"}.
+#' @param export_formats File formats to export. Default \code{c("pdf","svg")}.
 #'
-#' @return A \pkg{ggplot2} object.
+#' @return A ggplot object.
 #' @export
 plot_wald_volcano <- function(
     wald_df,
-    pval_col = "P-value 1",
-    fdr_col  = "Adjusted P-value (FDR)_1",
     beta_before_col = "Beta 1",
-    beta_after_col  = "Beta 3",
+    beta_after_col  = "Beta 2",
+    pval_col = "P-value",
+    fdr_col  = "Adjusted P-value",
     protein_col = "Protein",
     pval_threshold = 0.05,
     fdr_threshold  = 0.05,
@@ -51,89 +45,106 @@ plot_wald_volcano <- function(
 
   df <- tibble::as_tibble(wald_df)
 
-  # Resolve columns (be forgiving about fdr col naming)
-  if (!pval_col %in% names(df)) {
-    stop("plot_wald_volcano(): column '", pval_col, "' not found.", call. = FALSE)
-  }
-  if (!fdr_col %in% names(df)) {
-    candidates <- c("Adjusted P-value 1", "Adjusted P-value 2", "FDR", "FDR_1", "Adjusted P-value (FDR)_1")
-    alt <- intersect(candidates, names(df))
-    if (length(alt) == 0) {
-      stop("plot_wald_volcano(): FDR column '", fdr_col,
-           "' not found, and no common alternatives present.", call. = FALSE)
-    }
-    fdr_col <- alt[1]
-  }
-  need <- c(beta_before_col, beta_after_col, protein_col)
+  # Required columns
+  need <- c(beta_before_col, beta_after_col, pval_col, protein_col)
   miss <- setdiff(need, names(df))
   if (length(miss)) {
-    stop("plot_wald_volcano(): missing columns: ", paste(miss, collapse = ", "), call. = FALSE)
+    stop("plot_wald_volcano(): missing columns: ",
+         paste(miss, collapse = ", "), call. = FALSE)
   }
 
-  # Derived metrics
-  df$neglog10p <- -log10(suppressWarnings(as.numeric(df[[pval_col]])))
-  fc <- suppressWarnings(as.numeric(df[[beta_after_col]]) / as.numeric(df[[beta_before_col]]))
-  df$log2FoldChange <- sign(fc) * log2(abs(fc))
-  df$Significance <- ifelse(df[[pval_col]] < pval_threshold & df[[fdr_col]] < fdr_threshold,
-                            "Significant", "Not Significant")
-
-  # Keep only finite values for plotting
-  df <- df[is.finite(df$neglog10p) & is.finite(df$log2FoldChange), , drop = FALSE]
+  # Derived quantities
+  df <- df |>
+    dplyr::mutate(
+      delta_beta = .data[[beta_after_col]] - .data[[beta_before_col]],
+      neglog10p  = -log10(.data[[pval_col]]),
+      Significance = dplyr::if_else(
+        .data[[pval_col]] < pval_threshold &
+          (!fdr_col %in% names(df) | .data[[fdr_col]] < fdr_threshold),
+        "Significant", "Not Significant"
+      )
+    ) |>
+    dplyr::filter(is.finite(delta_beta), is.finite(neglog10p))
 
   # Base plot
   p <- ggplot2::ggplot(
     df,
-    ggplot2::aes(x = .data$log2FoldChange, y = .data$neglog10p, fill = .data$Significance)
+    ggplot2::aes(x = .data$delta_beta, y = .data$neglog10p, fill = .data$Significance)
   ) +
-    ggplot2::geom_hline(yintercept = -log10(pval_threshold), linetype = "dashed", color = "black", linewidth = 0.5) +
-    ggplot2::geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "steelblue", linewidth = 0.5) +
-    ggplot2::geom_point(shape = 21, color = "black", stroke = 0.3, alpha = 0.7, size = 1.8) +
-    ggplot2::scale_fill_manual(values = c("Not Significant" = "gray", "Significant" = "#B24745")) +
+    ggplot2::geom_hline(
+      yintercept = -log10(pval_threshold),
+      linetype = "dashed",
+      linewidth = 0.5,
+      color = "black"
+    ) +
+    ggplot2::geom_vline(
+      xintercept = 0,
+      linetype = "dashed",
+      linewidth = 0.5,
+      color = "steelblue"
+    ) +
+    ggplot2::geom_point(
+      shape = 21,
+      color = "black",
+      stroke = 0.3,
+      alpha = 0.75,
+      size = 2
+    ) +
+    ggplot2::scale_fill_manual(
+      values = c("Not Significant" = "gray70", "Significant" = "#B24745")
+    ) +
     ggplot2::labs(
-      x = "log2 Fold Change",
-      y = "-log10(p-value)",
-      title = "Volcano Plot for Wald Test",
+      x = expression(Delta * " slope (Post − Pre)"),
+      y = expression(-log[10](p)),
+      title = "CPMM Wald Test Volcano Plot",
       fill = "Significance"
     ) +
-    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(
-      panel.grid.major.y = ggplot2::element_line(color = "#DDDDDD", linewidth = 0.5),
-      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_line(color = "#DDDDDD", linewidth = 0.4),
       panel.grid.major.x = ggplot2::element_blank(),
-      axis.title = ggplot2::element_text(size = 10),
-      axis.text  = ggplot2::element_text(size = 9),
-      plot.title = ggplot2::element_text(size = 11, face = "bold"),
-      legend.position = "right",
-      legend.background = ggplot2::element_rect(fill = "white", color = "grey80")
+      panel.grid.minor = ggplot2::element_blank(),
+      axis.title = ggplot2::element_text(size = 11),
+      axis.text  = ggplot2::element_text(size = 10),
+      plot.title = ggplot2::element_text(size = 13, face = "bold"),
+      legend.position = "right"
     )
 
-  # Optional annotations
+  # Annotations
   if (isTRUE(annotate)) {
-    if (!is.null(annotate_list)) {
-      lab_df <- df[df[[protein_col]] %in% annotate_list, , drop = FALSE]
+    lab_df <- if (!is.null(annotate_list)) {
+      df[df[[protein_col]] %in% annotate_list, , drop = FALSE]
     } else {
-      lab_df <- df[df$Significance == "Significant", , drop = FALSE]
+      df[df$Significance == "Significant", , drop = FALSE]
     }
+
     if (nrow(lab_df)) {
       p <- p + ggplot2::geom_text(
         data = lab_df,
         ggplot2::aes(label = .data[[protein_col]]),
-        size = 2.8, vjust = -0.2, hjust = 1, color = "black"
+        size = 3,
+        vjust = -0.3,
+        hjust = 0.5
       )
     }
   }
 
-  # Style overrides, if provided
-  if (!is.null(style_config) && length(style_config)) {
+  # Style overrides
+  if (!is.null(style_config)) {
     p <- p + do.call(ggplot2::theme, style_config)
   }
 
-  # Export if requested
+  # Export
   if (isTRUE(export)) {
-    if (!dir.exists(export_dir)) dir.create(export_dir, recursive = TRUE, showWarnings = FALSE)
+    if (!dir.exists(export_dir)) dir.create(export_dir, recursive = TRUE)
     for (fmt in export_formats) {
-      outfile <- file.path(export_dir, paste0(export_name, ".", fmt))
-      ggplot2::ggsave(outfile, p, width = 7, height = 5, dpi = 300)
+      ggplot2::ggsave(
+        filename = file.path(export_dir, paste0(export_name, ".", fmt)),
+        plot = p,
+        width = 7,
+        height = 5,
+        dpi = 300
+      )
     }
   }
 

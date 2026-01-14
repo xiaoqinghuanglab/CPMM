@@ -2,62 +2,49 @@
 % Please edit documentation in R/viz_cpmm.R
 \name{plot_cpmm}
 \alias{plot_cpmm}
-\title{Plot CPMM trajectories (status-change, normal-only, abnormal-only)}
+\title{Plot CPMM trajectory}
 \usage{
 plot_cpmm(
   df_status_change,
-  df_normal,
-  df_abnormal,
   protein,
   covariates = c("SEX", "BASELINE_AGE"),
   years_since_onset_col = "years_since_onset",
   subject_id_col = "SUBID",
-  group_colors = NULL,
-  group_labels = NULL,
-  style_config = NULL,
+  main_color = "#B24745",
   export = FALSE,
   export_dir = "Figures",
   export_formats = c("pdf", "svg")
 )
 }
 \arguments{
-\item{df_status_change}{Data frame of status-change patients.}
+\item{df_status_change}{Data frame of status-change (converter) subjects.}
 
-\item{df_normal}{Data frame of normal-only patients.}
+\item{protein}{Character; protein column name.}
 
-\item{df_abnormal}{Data frame of abnormal-only patients.}
+\item{covariates}{Character vector of covariates. Default c("SEX","BASELINE_AGE").}
 
-\item{protein}{Character; protein column to analyze.}
+\item{years_since_onset_col}{Column name. Default "years_since_onset".}
 
-\item{covariates}{Character vector of covariate columns. Default \code{c("SEX","BASELINE_AGE")}.}
+\item{subject_id_col}{Subject ID column. Default "SUBID".}
 
-\item{years_since_onset_col}{Column name for years since onset. Default \code{"years_since_onset"}.}
+\item{main_color}{Line/point color. Default muted red.}
 
-\item{subject_id_col}{Subject ID column (random intercept). Default \code{"SUBID"}.}
+\item{export}{Logical; save plot?}
 
-\item{group_colors}{Named vector for colors with keys \code{"status_change","normal","abnormal"}.}
+\item{export_dir}{Output directory.}
 
-\item{group_labels}{Named vector for legend labels with same keys as \code{group_colors}.}
-
-\item{style_config}{Optional list of ggplot2 theme overrides (e.g. \code{list(panel.grid = element_blank())}).}
-
-\item{export}{Logical; save the plot to \code{export_dir} in \code{export_formats}.}
-
-\item{export_dir}{Directory to save into. Default \code{"Figures"}.}
-
-\item{export_formats}{Character vector of file extensions (e.g. \code{c("pdf","svg")}). Default \code{c("pdf","svg")}.}
+\item{export_formats}{File formats.}
 }
 \value{
 A ggplot object.
 }
 \description{
-Fits 3 random-intercept LMMs for a given protein with a fixed changepoint at 0:
-\itemize{
-\item Status-change:  \code{protein ~ before_onset + after_onset + covariates + (1|SUBID)}
-\item Normal-only:    \code{protein ~ before_onset + covariates + (1|SUBID)}
-\item Abnormal-only:  \code{protein ~ after_onset  + covariates + (1|SUBID)}
+Fits a change-point mixed model with a fixed changepoint at 0:
+protein ~ before_onset + after_onset + covariates + (1 | SUBID)
 }
-It predicts each model at the mean of the provided covariates (from the status-change
-cohort), averages predictions within each \code{years_since_onset} to get a smooth
-"global" trend, and plots all three curves. A dashed line marks onset (0).
+\details{
+Plots:
+• Global fitted CPMM trajectory (population-level prediction)
+• Raw subject-level scatter points (outline only)
+• Vertical onset line at 0
 }

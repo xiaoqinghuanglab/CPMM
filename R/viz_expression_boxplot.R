@@ -6,11 +6,10 @@
 #' @param expression_col Column with expression values. Default "Expression".
 #' @param gene_col Column with gene names. Default "Gene".
 #' @param palette Optional named character vector mapping categories -> colors.
-#'   If NULL, uses \code{jama_palette()} if available, otherwise a built-in JAMA-like set.
+#'   If NULL, a CPMM default diagnostic palette is used.
 #' @param title Plot title.
 #' @param y_limit Optional numeric; upper y-axis limit.
 #' @param figsize Numeric length-2 vector of inches \code{c(width, height)} for export.
-#'   Default \code{c(32, 8)} (matches your Python defaults).
 #' @param rotation Integer angle for x tick labels. Default 45.
 #' @param export Logical; save plot to disk? Default FALSE.
 #' @param export_dir Directory to save into if \code{export=TRUE}. Default "Figures".
@@ -40,98 +39,102 @@ plot_expression_boxplot <- function(
   requireNamespace("tibble", quietly = TRUE)
   requireNamespace("rlang", quietly = TRUE)
 
-  # checks
+  # ---- checks ----
   stopifnot(is.data.frame(combined_expr))
   need <- c(hue_col, expression_col, gene_col)
   miss <- setdiff(need, names(combined_expr))
   if (length(miss)) {
-    stop("plot_expression_boxplot(): missing columns: ", paste(miss, collapse = ", "), call. = FALSE)
+    stop("plot_expression_boxplot(): missing columns: ",
+         paste(miss, collapse = ", "), call. = FALSE)
   }
-  if (length(figsize) != 2) stop("figsize must be length-2 numeric, c(width, height).", call. = FALSE)
+  if (length(figsize) != 2) {
+    stop("figsize must be length-2 numeric: c(width, height).", call. = FALSE)
+  }
 
   df <- tibble::as_tibble(combined_expr)
 
-  # ensure gene order as an ordered factor
+  # ensure gene order
   df[[gene_col]] <- factor(df[[gene_col]], levels = gene_order, ordered = TRUE)
 
-  # default palette (JAMA-like)
+  # ---- default CPMM palette ----
   if (is.null(palette)) {
-    palette <- if (exists("jama_palette", mode = "function")) {
-      jama_palette()
-    } else {
-      c(
-        Normal_only  = "#00A1D5",
-        SCD          = "#DF8F44",
-        MCI          = "#B24745",
-        AD_Dementia  = "#79AF97",
-        FTD_Dementia = "#6A6599"
-      )
-    }
+    palette <- c(
+      Normal_only  = "#00A1D5",
+      SCD          = "#DF8F44",
+      MCI          = "#B24745",
+      AD_Dementia  = "#79AF97",
+      FTD_Dementia = "#6A6599"
+    )
   }
-  # make sure palette is named for all groups present (recycle if needed)
+
+  # ensure palette covers all groups
   groups <- sort(unique(df[[hue_col]]))
-  if (is.null(names(palette))) names(palette) <- groups
+  if (is.null(names(palette))) {
+    names(palette) <- groups
+  }
   if (!all(groups %in% names(palette))) {
-    extra <- rep(palette, length.out = length(groups))
-    names(extra) <- groups
-    palette <- extra
+    pal_tmp <- rep(palette, length.out = length(groups))
+    names(pal_tmp) <- groups
+    palette <- pal_tmp
   }
   pal_used <- unname(palette[groups])
 
-  # outlier styling (mimics Python: white-filled, black edge, small)
-  outlier_shape  <- 21
-  outlier_fill   <- "white"
-  outlier_color  <- "black"
-  outlier_size   <- 1.8  # ~ markersize 2 in matplotlib
-  outlier_stroke <- 0.5
-
+  # ---- plot ----
   p <- ggplot2::ggplot(
     df,
-    ggplot2::aes(x = .data[[gene_col]], y = .data[[expression_col]], fill = .data[[hue_col]])
+    ggplot2::aes(
+      x = .data[[gene_col]],
+      y = .data[[expression_col]],
+      fill = .data[[hue_col]]
+    )
   ) +
     ggplot2::geom_boxplot(
       width = 0.9,
       linewidth = 0.8,
       position = ggplot2::position_dodge2(preserve = "single"),
-      outlier.shape = outlier_shape,
-      outlier.fill  = outlier_fill,
-      outlier.color = outlier_color,
-      outlier.size  = outlier_size,
-      outlier.stroke = outlier_stroke
+      outlier.shape = 21,
+      outlier.fill  = "white",
+      outlier.color = "black",
+      outlier.size  = 1.8,
+      outlier.stroke = 0.5
     ) +
     ggplot2::scale_fill_manual(values = pal_used, name = "Category") +
-    ggplot2::labs(x = "Gene", y = "Expression", title = title) +
+    ggplot2::labs(
+      x = "Gene",
+      y = "Expression",
+      title = title
+    ) +
     ggplot2::theme_minimal(base_size = 20) +
     ggplot2::theme(
-      # Grid & “spines”
       panel.grid.minor   = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_blank(),
       panel.grid.major.y = ggplot2::element_line(linewidth = 0.4),
       panel.border       = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1.5),
-
-      # Text sizes and rotation (match your rcParams intent)
-      axis.title  = ggplot2::element_text(size = 20),
-      axis.text   = ggplot2::element_text(size = 18),
-      legend.title = ggplot2::element_text(size = 18),
-      legend.text  = ggplot2::element_text(size = 18),
-      plot.title   = ggplot2::element_text(size = 22, face = "bold"),
-      axis.text.x  = ggplot2::element_text(angle = rotation, hjust = 1),
-
-      legend.position = "right"  # avoids numeric legend.position deprecation
+      axis.title         = ggplot2::element_text(size = 20),
+      axis.text          = ggplot2::element_text(size = 18),
+      axis.text.x        = ggplot2::element_text(angle = rotation, hjust = 1),
+      legend.title       = ggplot2::element_text(size = 18),
+      legend.text        = ggplot2::element_text(size = 18),
+      plot.title         = ggplot2::element_text(size = 22, face = "bold"),
+      legend.position    = "right"
     )
 
-  # optional upper y limit (like ax.set_ylim(top=...))
   if (!is.null(y_limit) && is.finite(y_limit)) {
     p <- p + ggplot2::coord_cartesian(ylim = c(NA, y_limit))
   }
 
-  # export if requested
+  # ---- export ----
   if (isTRUE(export)) {
-    if (!dir.exists(export_dir)) dir.create(export_dir, recursive = TRUE, showWarnings = FALSE)
+    if (!dir.exists(export_dir)) {
+      dir.create(export_dir, recursive = TRUE, showWarnings = FALSE)
+    }
     for (fmt in export_formats) {
       ggplot2::ggsave(
         filename = file.path(export_dir, paste0(export_name, ".", fmt)),
-        plot = p, width = figsize[1], height = figsize[2], dpi = 300
+        plot = p,
+        width = figsize[1],
+        height = figsize[2],
+        dpi = 300
       )
     }
   }

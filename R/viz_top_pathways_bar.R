@@ -11,7 +11,7 @@
 #' @param category_col Column for biological categories. Default `"BioCategory_Manual"`.
 #' @param top_n Number of pathways to display. Default `15`.
 #' @param palette Optional vector of hex colors for categories. If `NULL`, a default
-#'   JAMA-like palette is used and truncated to the number of categories.
+#' palette is used and truncated to the number of categories.
 #' @param annotate Annotate bars? Default `TRUE`.
 #' @param annotation_format Template for annotations. Supports `{val:.2f}`, `{val:.1e}`, or `{val}`.
 #'   Default `"LogQ = {val:.2f}"`.
@@ -74,14 +74,18 @@ plot_top_pathways_bar <- function(
 
   # ---- palette ----
   all_cats <- sort(unique(df[[category_col]]))
+
   if (is.null(palette)) {
-    default_palette <- c(
-      "#DF8F44", "#00A1D5", "#B24745", "#79AF97", "#6A6599",
-      "#374E55", "#80796B", "#AA4499", "#117733", "#999933", "#882255"
+    palette <- c(
+      "#1F77B4", "#FF7F0E", "#2CA02C", "#D62728", "#9467BD",
+      "#8C564B", "#E377C2", "#7F7F7F", "#BCBD22", "#17BECF"
     )
-    palette <- default_palette[seq_len(min(length(default_palette), length(all_cats)))]
   }
+
+  # recycle safely if needed
+  palette <- rep(palette, length.out = length(all_cats))
   names(palette) <- all_cats
+
   # colors used in the plotted subset
   cats_used <- levels(factor(top_pathways[[category_col]]))
   pal_used <- unname(palette[cats_used])

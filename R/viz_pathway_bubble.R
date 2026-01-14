@@ -104,7 +104,7 @@ plot_pathway_bubble <- function(
   pal_name <- sub("_r$", "", cmap)
   pal_dir  <- if (grepl("_r$", cmap)) -1 else 1
 
-  # dynamic height roughly matching Python: (max_y + 2) * 0.5 inches
+  # dynamic height roughly: (max_y + 2) * 0.5 inches
   max_y <- max(pathway_order_df$compact_y_pos, na.rm = TRUE)
   export_height <- (max_y + 2) * 0.5
   export_width  <- 7.5

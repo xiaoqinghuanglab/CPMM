@@ -9,8 +9,10 @@ Description: Tools to preprocess longitudinal datasets, fit change-point mixed m
 License: `use_mit_license()`, `use_gpl3_license()`
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Suggests: 
+    glmnet,
+    pROC,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)

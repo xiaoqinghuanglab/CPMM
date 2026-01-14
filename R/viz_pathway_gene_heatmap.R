@@ -9,7 +9,7 @@
 #' @param category_col Column name for pathway categories. Default `"BioCategory_Manual"`.
 #' @param gene_col Column name for genes. Default `"Gene"`.
 #' @param palette Vector of hex colors for categories (names optional). If `NULL`,
-#'   a default JAMA-like palette is used and truncated to the number of categories.
+#'   a default palette is used and truncated to the number of categories.
 #' @param style_config Optional list of `ggplot2::theme()` overrides.
 #' @param title Plot title. Default `"Pathway-Gene Membership Heatmap"`.
 #' @param export Save the plot? Default `FALSE`.
@@ -135,7 +135,7 @@ plot_pathway_gene_heatmap <- function(
       panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.6)
     )
 
-  # gridlines to mimic Python's per-cell lines
+  # gridlines
   # vertical lines at boundaries
   vgrid <- tibble::tibble(x = seq(0, length(gene_order), by = 1))
   hgrid <- tibble::tibble(y = seq(-0.5, max_y + 1.5, by = 1))
