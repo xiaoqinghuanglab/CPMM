@@ -2,14 +2,14 @@
 % Please edit documentation in R/viz_wald_volcano.R
 \name{plot_wald_volcano}
 \alias{plot_wald_volcano}
-\title{Volcano plot for Wald test results}
+\title{Volcano plot for CPMM Wald test results}
 \usage{
 plot_wald_volcano(
   wald_df,
-  pval_col = "P-value 1",
-  fdr_col = "Adjusted P-value (FDR)_1",
   beta_before_col = "Beta 1",
-  beta_after_col = "Beta 3",
+  beta_after_col = "Beta 2",
+  pval_col = "P-value",
+  fdr_col = "Adjusted P-value",
   protein_col = "Protein",
   pval_threshold = 0.05,
   fdr_threshold = 0.05,
@@ -23,47 +23,41 @@ plot_wald_volcano(
 )
 }
 \arguments{
-\item{wald_df}{Data frame with Wald results (from \code{compute_wald_test()} or similar).}
+\item{wald_df}{Data frame from \code{compute_wald_test()}.}
 
-\item{pval_col}{Column with raw p-values. Default \code{"P-value 1"}.}
+\item{beta_before_col}{Column for pre-onset slope. Default \code{"Beta 1"}.}
 
-\item{fdr_col}{Column with FDR-adjusted p-values. Default
-\code{"Adjusted P-value (FDR)_1"}. If not found, common alternatives are tried
-(e.g. \code{"Adjusted P-value 1"}, \code{"FDR"}).}
+\item{beta_after_col}{Column for post-onset slope. Default \code{"Beta 2"}.}
 
-\item{beta_before_col}{Column with slope before onset (β1). Default \code{"Beta 1"}.}
+\item{pval_col}{Column with raw p-values. Default \code{"P-value"}.}
 
-\item{beta_after_col}{Column with slope after onset (β3). Default \code{"Beta 3"}.}
+\item{fdr_col}{Column with adjusted p-values. Default \code{"Adjusted P-value"}.}
 
 \item{protein_col}{Column with protein/gene names. Default \code{"Protein"}.}
 
-\item{pval_threshold}{Raw p-value cutoff for significance. Default \code{0.05}.}
+\item{pval_threshold}{Raw p-value cutoff. Default \code{0.05}.}
 
-\item{fdr_threshold}{FDR cutoff for significance. Default \code{0.05}.}
+\item{fdr_threshold}{FDR cutoff. Default \code{0.05}.}
 
-\item{annotate}{Logical; annotate points? Default \code{TRUE}.}
+\item{annotate}{Logical; annotate significant proteins? Default \code{TRUE}.}
 
-\item{annotate_list}{Optional character vector of proteins to annotate; if \code{NULL}
-and \code{annotate=TRUE}, annotates all points labeled "Significant".}
+\item{annotate_list}{Optional vector of protein names to annotate.}
 
-\item{style_config}{Optional list of \pkg{ggplot2} theme overrides (e.g.,
-\code{list(legend.position = "bottom")}).}
+\item{style_config}{Optional list of ggplot2 theme overrides.}
 
-\item{export}{Logical; save the plot? Default \code{FALSE}.}
+\item{export}{Logical; save plot? Default \code{FALSE}.}
 
-\item{export_dir}{Directory to save into. Default \code{"Figures"}.}
+\item{export_dir}{Directory to save files. Default \code{"Figures"}.}
 
-\item{export_name}{Base filename (no extension). Default \code{"wald_volcano"}.}
+\item{export_name}{Base filename. Default \code{"wald_volcano"}.}
 
-\item{export_formats}{Character vector of extensions, e.g. \code{c("pdf","svg")}.}
+\item{export_formats}{File formats to export. Default \code{c("pdf","svg")}.}
 }
 \value{
-A \pkg{ggplot2} object.
+A ggplot object.
 }
 \description{
-Builds a volcano using signed \eqn{\log_2} fold-change between post- and pre-onset
-slopes (\code{beta_after_col / beta_before_col}) and \eqn{-\log_{10}(p)}.
-Points are colored by significance: \code{p < pval_threshold} \emph{and}
-\code{FDR < fdr_threshold}. You can optionally annotate significant proteins
-(or a custom list) and export in multiple formats.
+Builds a volcano plot using the signed slope difference
+\eqn{\Delta \beta = \beta_{after} - \beta_{before}} on the x-axis
+and \eqn{-\log_{10}(p)} on the y-axis.
 }

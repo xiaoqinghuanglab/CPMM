@@ -35,7 +35,7 @@ plot_top_pathways_bar(
 \item{top_n}{Number of pathways to display. Default \code{15}.}
 
 \item{palette}{Optional vector of hex colors for categories. If \code{NULL}, a default
-JAMA-like palette is used and truncated to the number of categories.}
+palette is used and truncated to the number of categories.}
 
 \item{annotate}{Annotate bars? Default \code{TRUE}.}
 

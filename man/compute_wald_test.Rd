@@ -2,20 +2,16 @@
 % Please edit documentation in R/stats_wald.R
 \name{compute_wald_test}
 \alias{compute_wald_test}
-\title{Wald tests for pre- vs post-onset slope differences}
+\title{Wald test for pre- vs post-onset slope difference (CPMM)}
 \usage{
-compute_wald_test(results_df, adjust_p = TRUE, rank_by = 1, alpha = 0.05)
+compute_wald_test(results_df, adjust_p = TRUE, alpha = 0.05)
 }
 \arguments{
 \item{results_df}{A data.frame/tibble from \code{fit_cpmm_all_proteins()}
 containing columns: \code{Protein}, \code{Beta 1}, \code{SE Beta 1},
-\code{Beta 2}, \code{SE Beta 2}, \code{Beta 3}, \code{SE Beta 3},
-\code{Beta 4}, \code{SE Beta 4}.}
+\code{Beta 2}, \code{SE Beta 2}.}
 
 \item{adjust_p}{Logical; apply BH-FDR? Default \code{TRUE}.}
-
-\item{rank_by}{Integer {1,2}; rank by test 1 (status-change slopes) or test 2
-(normal vs abnormal slopes). Default \code{1}.}
 
 \item{alpha}{Numeric; significance threshold. Default \code{0.05}.}
 }
@@ -23,18 +19,23 @@ containing columns: \code{Protein}, \code{Beta 1}, \code{SE Beta 1},
 A tibble with columns:
 \itemize{
 \item \code{Protein}
-\item \code{Beta 1}, \code{SE Beta 1}, \code{Beta 3}, \code{SE Beta 3},
-\code{Wald Statistic 1}, \code{P-value 1}, and (if adjusted)
-\code{Adjusted P-value 1}, \code{Significant 1}
-\item \code{Beta 2}, \code{SE Beta 2}, \code{Beta 4}, \code{SE Beta 4},
-\code{Wald Statistic 2}, \code{P-value 2}, and (if adjusted)
-\code{Adjusted P-value 2}, \code{Significant 2}
-\item \code{Rank} (1 = most significant according to \code{rank_by})
+\item \code{Beta 1}, \code{SE Beta 1}
+\item \code{Beta 2}, \code{SE Beta 2}
+\item \code{Wald Statistic}
+\item \code{P-value}
+\item \code{Adjusted P-value} (if \code{adjust_p = TRUE})
+\item \code{Significant} (logical; if \code{adjust_p = TRUE})
+\item \code{Rank}
 }
 }
 \description{
-Compares (Beta 1 vs Beta 3) and (Beta 2 vs Beta 4) using 1-df Wald tests:
-\deqn{W = (b_i - b_j)^2 / (se_i^2 + se_j^2),\quad p = 1 - F_{\chi^2_1}(W).}
-Optionally applies BH-FDR to each set of p-values, ranks results by the chosen
-(adjusted) p-value, and flags significance at \code{alpha}.
+Performs a Wald test comparing the pre-onset and post-onset slopes
+from a CPMM:
+}
+\details{
+\deqn{W = (\beta_1 - \beta_2)^2 / (SE_1^2 + SE_2^2), \quad
+p = 1 - F_{\chi^2_1}(W)}
+
+Optionally applies Benjamini–Hochberg FDR correction, flags significance,
+and ranks proteins by (adjusted) p-value.
 }

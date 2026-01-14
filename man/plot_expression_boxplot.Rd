@@ -33,14 +33,13 @@ plot_expression_boxplot(
 \item{gene_col}{Column with gene names. Default "Gene".}
 
 \item{palette}{Optional named character vector mapping categories -> colors.
-If NULL, uses \code{jama_palette()} if available, otherwise a built-in JAMA-like set.}
+If NULL, a CPMM default diagnostic palette is used.}
 
 \item{title}{Plot title.}
 
 \item{y_limit}{Optional numeric; upper y-axis limit.}
 
-\item{figsize}{Numeric length-2 vector of inches \code{c(width, height)} for export.
-Default \code{c(32, 8)} (matches your Python defaults).}
+\item{figsize}{Numeric length-2 vector of inches \code{c(width, height)} for export.}
 
 \item{rotation}{Integer angle for x tick labels. Default 45.}
 

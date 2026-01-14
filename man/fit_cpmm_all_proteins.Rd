@@ -2,12 +2,10 @@
 % Please edit documentation in R/models_cpmm.R
 \name{fit_cpmm_all_proteins}
 \alias{fit_cpmm_all_proteins}
-\title{Fit change-point MMs across multiple proteins and strata}
+\title{Fit change-point mixed models (CPMM) across proteins}
 \usage{
 fit_cpmm_all_proteins(
   df_status_change,
-  df_normal,
-  df_abnormal,
   protein_list,
   covariates = c("SEX", "BASELINE_AGE"),
   subject_id_col = "SUBID",
@@ -15,38 +13,30 @@ fit_cpmm_all_proteins(
 )
 }
 \arguments{
-\item{df_status_change}{Data frame for status-change subjects.}
+\item{df_status_change}{Data frame for status-change subjects only.}
 
-\item{df_normal}{Data frame for always-normal subjects.}
+\item{protein_list}{Character vector of protein column names.}
 
-\item{df_abnormal}{Data frame for always-abnormal subjects.}
+\item{covariates}{Fixed-effect covariates. Default c("SEX","BASELINE_AGE").}
 
-\item{protein_list}{Character vector of protein column names to model.}
+\item{subject_id_col}{Subject ID column. Default "SUBID".}
 
-\item{covariates}{Character vector of additional fixed-effect covariates.
-Defaults to c("SEX","BASELINE_AGE").}
-
-\item{subject_id_col}{Column name for subject ID (random intercept). Default "SUBID".}
-
-\item{years_since_onset_col}{Column name for years since onset. Default "years_since_onset".}
+\item{years_since_onset_col}{Years-since-onset column. Default "years_since_onset".}
 }
 \value{
-A tibble with one row per protein containing Beta 1–4, their SEs,
-the status-model intercept, and AIC/BIC/MSE per stratum.
+A tibble with one row per protein containing Beta 1–2, SEs,
+intercept, and model fit metrics.
 }
 \description{
-Fits three random-intercept MMs per protein:
-\itemize{
-\item Status-change:  protein ~ before_onset + after_onset + covariates + (1 | subject_id)
-\item Normal-only:    protein ~ before_onset + covariates + (1 | subject_id)
-\item Abnormal-only:  protein ~ after_onset  + covariates + (1 | subject_id)
-}
+Fits a random-intercept CPMM per protein
 }
 \details{
-The change point is fixed at 0 on \code{years_since_onset_col}. We define
-\code{before_onset = pmax(0, -years_since_onset)} and
-\code{after_onset  = pmax(0,  years_since_onset)}.
+protein ~ before_onset + after_onset + covariates + (1 | subject_id)
+
+The change point is fixed at 0 on \code{years_since_onset_col}.
+Piecewise terms are defined as:
+\itemize{
+\item before_onset = pmax(0, -years_since_onset)
+\item after_onset  = pmax(0,  years_since_onset)
 }
-\examples{
-# See tests for a minimal synthetic example.
 }

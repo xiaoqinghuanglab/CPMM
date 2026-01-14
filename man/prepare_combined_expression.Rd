@@ -2,54 +2,27 @@
 % Please edit documentation in R/expression_prep.R
 \name{prepare_combined_expression}
 \alias{prepare_combined_expression}
-\title{Prepare long-format expression data across strata and diagnostic categories}
+\title{Prepare long-format expression data across multiple strata}
 \usage{
-prepare_combined_expression(
-  df_normal_only,
-  df_status_change,
-  df_abnormal_only,
-  df_all,
-  subset_genes,
-  category_col = "CATEGORY",
-  categories = c("SCD", "MCI", "AD Dementia", "FTD Dementia"),
-  normal_label = "Normal_only",
-  status_label = "Status_change",
-  abnormal_label = "Abnormal_only"
-)
+prepare_combined_expression(inputs, subset_genes)
 }
 \arguments{
-\item{df_normal_only}{Data frame for normal-only subjects.}
+\item{inputs}{A list of lists. Each element must contain:
+\itemize{
+\item df: data frame
+\item label: source label to assign
+\item category_col (optional): column name for filtering
+\item categories (optional): vector of category values to keep
+}}
 
-\item{df_status_change}{Data frame for status-change subjects.}
-
-\item{df_abnormal_only}{Data frame for abnormal-only subjects.}
-
-\item{df_all}{Full data frame containing the \code{category_col}.}
-
-\item{subset_genes}{Character vector of gene/protein column names to include.}
-
-\item{category_col}{Column name in \code{df_all} with diagnosis categories.
-Default: \code{"CATEGORY"}.}
-
-\item{categories}{Character vector of category labels to include from \code{df_all}.
-Default: \code{c("SCD","MCI","AD Dementia","FTD Dementia")}.}
-
-\item{normal_label}{Label to use for the normal-only cohort in the output.
-Default: \code{"Normal_only"}.}
-
-\item{status_label}{Label to use for the status-change cohort in the output.
-Default: \code{"Status_change"}.}
-
-\item{abnormal_label}{Label to use for the abnormal-only cohort in the output.
-Default: \code{"Abnormal_only"}.}
+\item{subset_genes}{Character vector of gene/protein columns to include.}
 }
 \value{
-A tibble with columns \code{Gene}, \code{Expression}, \code{Source}, where
-\code{Gene} is an ordered factor with levels matching \code{subset_genes}.
+A tibble with columns Gene, Expression, Source.
+Gene is an ordered factor matching subset_genes.
 }
 \description{
-Takes three cohort-specific data frames (normal-only, status-change,
-abnormal-only) plus the full data frame with a diagnosis/category column.
-Selects a subset of genes/proteins, pivots them to long format, coerces
-values to numeric, tags the source, and binds all results together.
+Melts selected genes from one or more data frames into a single
+long-format expression table. Each input can optionally be filtered
+by diagnosis/category and assigned a custom source label.
 }

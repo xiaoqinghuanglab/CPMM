@@ -1,32 +1,43 @@
-#' JAMA palette for diagnostic categories (Python parity)
+#' CPMM default color palette for diagnostic and cohort groups
 #'
-#' Returns a named character vector of hex colors matching your Python
-#' \code{JAMA_PALETTE} (keys use underscores).
+#' Returns a named character vector of hex colors used consistently across
+#' CPMM plots (diagnostic categories and cohort-level strata).
 #'
-#' @return Named character vector: Normal_only, SCD, MCI, AD_Dementia, FTD_Dementia.
+#' @return Named character vector of colors.
 #' @examples
-#' pal <- jama_palette()
+#' pal <- cpmm_palette()
 #' pal["MCI"]
+#' pal["Status_change"]
 #' @export
-jama_palette <- function() {
+cpmm_palette <- function() {
   c(
-    Normal_only  = "#00A1D5",
-    SCD          = "#DF8F44",
-    MCI          = "#B24745",
-    AD_Dementia  = "#79AF97",
-    FTD_Dementia = "#6A6599"
+    # Diagnostic groups
+    Normal_only   = "#00A1D5",
+    Normal        = "#00A1D5",
+    CU            = "#00A1D5",
+
+    SCD           = "#DF8F44",
+    MCI           = "#B24745",
+    AD_Dementia   = "#79AF97",
+    FTD_Dementia  = "#6A6599",
+
+    # Cohort / trajectory groups
+    Status_change = "#DF8F44",
+    Converters    = "#B24745",
+    Abnormal_only = "#B24745"
   )
 }
 
-#' ggplot2 scales using the JAMA diagnostic palette
+#' ggplot2 color scale using the CPMM palette
+#'
 #' @inheritParams ggplot2::scale_color_manual
 #' @export
-scale_color_jama_diagnosis <- function(...) {
-  ggplot2::scale_color_manual(values = jama_palette(), ...)
+scale_color_cpmm <- function(...) {
+  ggplot2::scale_color_manual(values = cpmm_palette(), ...)
 }
 
-#' @rdname scale_color_jama_diagnosis
+#' @rdname scale_color_cpmm
 #' @export
-scale_fill_jama_diagnosis <- function(...) {
-  ggplot2::scale_fill_manual(values = jama_palette(), ...)
+scale_fill_cpmm <- function(...) {
+  ggplot2::scale_fill_manual(values = cpmm_palette(), ...)
 }

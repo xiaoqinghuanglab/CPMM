@@ -28,7 +28,7 @@ plot_pathway_gene_heatmap(
 \item{gene_col}{Column name for genes. Default \code{"Gene"}.}
 
 \item{palette}{Vector of hex colors for categories (names optional). If \code{NULL},
-a default JAMA-like palette is used and truncated to the number of categories.}
+a default palette is used and truncated to the number of categories.}
 
 \item{style_config}{Optional list of \code{ggplot2::theme()} overrides.}
 

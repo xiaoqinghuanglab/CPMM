@@ -2,13 +2,13 @@
 % Please edit documentation in R/viz_quadrant_beta.R
 \name{plot_quadrant_beta}
 \alias{plot_quadrant_beta}
-\title{Quadrant plot of beta coefficients from Wald results}
+\title{Quadrant plot of CPMM beta coefficients}
 \usage{
 plot_quadrant_beta(
   wald_df,
   beta_x_col = "Beta 1",
-  beta_y_col = "Beta 3",
-  fdr_col = "Adjusted P-value (FDR)_1",
+  beta_y_col = "Beta 2",
+  fdr_col = "Adjusted P-value",
   protein_col = "Protein",
   fdr_threshold = 0.05,
   annotate = TRUE,
@@ -20,14 +20,13 @@ plot_quadrant_beta(
 )
 }
 \arguments{
-\item{wald_df}{Data frame of Wald results.}
+\item{wald_df}{Data frame from compute_wald_test().}
 
-\item{beta_x_col}{Column for x beta (default "Beta 1").}
+\item{beta_x_col}{Column for pre-onset slope. Default "Beta 1".}
 
-\item{beta_y_col}{Column for y beta (default "Beta 3").}
+\item{beta_y_col}{Column for post-onset slope. Default "Beta 2".}
 
-\item{fdr_col}{Column for FDR-adjusted p-values (default "Adjusted P-value (FDR)_1";
-if missing, tries common alternatives like "Adjusted P-value 1" or "FDR").}
+\item{fdr_col}{Column for adjusted p-values. Default "Adjusted P-value".}
 
 \item{protein_col}{Column with protein identifiers. Default "Protein".}
 
@@ -35,21 +34,20 @@ if missing, tries common alternatives like "Adjusted P-value 1" or "FDR").}
 
 \item{annotate}{Logical; annotate significant proteins? Default TRUE.}
 
-\item{style_config}{Optional list of ggplot2 theme overrides.}
+\item{style_config}{Optional ggplot2 theme overrides.}
 
-\item{export}{Logical; write plot files? Default FALSE.}
+\item{export}{Logical; save plot? Default FALSE.}
 
 \item{export_dir}{Output directory. Default "Figures".}
 
-\item{export_name}{Base filename (no extension). Default "quadrant_plot".}
+\item{export_name}{Base filename. Default "quadrant_plot".}
 
-\item{export_formats}{Character vector of extensions. Default c("pdf","svg").}
+\item{export_formats}{File formats. Default c("pdf","svg").}
 }
 \value{
 A ggplot object.
 }
 \description{
-Plots \code{beta_x_col} (x-axis) vs \code{beta_y_col} (y-axis) with axes at 0.
-Points are split by FDR significance, significant ones highlighted and (optionally)
-annotated. Corner labels show counts per quadrant.
+Plots pre-onset slope (Beta 1) vs post-onset slope (Beta 2) with axes at 0.
+Points are highlighted by FDR significance and quadrant counts are displayed.
 }
