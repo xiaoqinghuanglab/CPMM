@@ -1,6 +1,6 @@
 # CPMM: Longitudinal Plasma Proteomics Analysis Package
 
-**CPMM** is designed for **longitudinal plasma proteomics analysis**, with a special focus on modeling disease onset and progression (e.g., Alzheimer's disease). It integrates preprocessing, change-point mixed models, statistical tests, survival analysis, and publication-style visualization.
+**CPMM** is designed for **longitudinal plasma proteomics analysis**, with a special focus on modeling disease onset and progression (e.g., Alzheimer's disease). It integrates preprocessing, change-point mixed models, statistical tests, survival analysis, and visualization.
 
 ## Table of Contents
 
@@ -74,8 +74,10 @@ df_normal_only <- read.csv("./data/df_normal_only_toy.csv")
 df_abnormal_only <- read.csv("./data/df_abnormal_only_toy.csv")
 df_status_change <- read.csv("./data/df_status_change_toy.csv")
 df_pathway <- read.csv("./data/toy_pathways.csv")
+df_mci <- read.csv("./data/df_mci_toy.csv")
 
-proteins <- colnames(df_normal_only)[9:27]
+# Select the proteins
+proteins <- colnames(df_status_change)[9:27]
 
 # Fit change-point mixed models across proteins
 results <- fit_cpmm_all_proteins(
@@ -175,24 +177,24 @@ Visualize protein trajectories for proteins of interest:
 ``` r
 plot_cpmm(
   df_status_change,
-  protein = "P1",                                     # protein/gene of inerest
+  protein = "P6",                                     # protein/gene of inerest
   covariates = c("SEX","BASELINE_AGE"),
   subject_id_col = "SUBID",
   years_since_onset_col = "years_since_onset"
 )
 ```
-![Protein Trajectories](./assets/cplmm_plot.svg)
+![Protein Trajectories](./assets/cplmm_plot.png)
 
 ### Volcano Plot
 
 ``` r
 plot_wald_volcano(
   wald_df = wald,
-  pval_col = "P-value 1",
+  pval_col = "Adjusted P-value",
   annotate = TRUE
 )
 ```
-![Volcano Plot](./assets/volcano.svg)
+![Volcano Plot](./assets/volcano.png)
 
 ### Quadrant Plot
 
@@ -205,7 +207,7 @@ plot_quadrant_beta(
   annotate = TRUE
 )
 ```
-![Quadrant Plot](./assets/quadrant.svg)
+![Quadrant Plot](./assets/quadrant.png)
 
 ### Expression Boxplots
 
@@ -218,7 +220,7 @@ plot_expression_boxplot(
   gene_col = "Gene"
 )
 ```
-![Expression Plot](./assets/expr.svg)
+![Expression Plot](./assets/expr.png)
 
 ## Pathway Analysis
 
@@ -291,25 +293,28 @@ plot_km_with_threshold(
   groups = list(
     Normal = list(df = df_normal_only),
     Status_change = list(df = df_status_change),
-    MCI = list(
+    SCD = list(
       df = df_status_change,
-      filter = CATEGORY == "MCI"
+      filter = CATEGORY == "SCD"
     )
   ),
   time_points = seq(-6, 6, by = 2)
 )
 
 ```
-![Survival Plot](./assets/survival.svg)
+![Survival Plot](./assets/survival.png)
 
 ## Predictive Modelling
 
 LASSO-Selected Logistic Regression with CV ROC
 
 ```r
+# Select the proteins for the LASSO
+prot <- paste0("P", 1:6)
+
 roc_res <- plot_lasso_cv_roc(
   df = df_mci,
-  protein_features = proteins,
+  protein_features = prot,
   covariates = c("PROCEDURE_AGE","Sex_bin"),
   label_col = "label",
   n_folds = 5,
@@ -317,8 +322,10 @@ roc_res <- plot_lasso_cv_roc(
 )
 
 roc_res$mean_auc
-roc_res$plot
+roc_res$final_features  # Shows the final selected features by the LASSO
+roc_res$plot            # If the LASSO didn't select any features a Warning appears: "No protein features were selected by LASSO; model uses covariates only."
 ```
+![AUC Plot](./assets/auc.png)
 
 ## Data Preprocessing
 
@@ -414,6 +421,7 @@ For detailed function documentation, use:
 ?compute_wald_test
 # ... and other function names
 ```
+
 
 
 
