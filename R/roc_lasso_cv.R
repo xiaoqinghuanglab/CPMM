@@ -34,6 +34,7 @@ plot_lasso_cv_roc <- function(
   set.seed(seed)
   if (is.null(covariates)) covariates <- character(0)
 
+  # ------------------ Input prep ------------------
   features <- unique(c(protein_features, covariates))
   df <- df[, c(features, label_col), drop = FALSE]
   df <- df[stats::complete.cases(df), , drop = FALSE]
@@ -43,31 +44,56 @@ plot_lasso_cv_roc <- function(
     stop("Outcome must contain two classes.", call. = FALSE)
   }
 
+  # ------------------ LASSO feature selection ------------------
   X_mat <- stats::model.matrix(~ . -1, data = df[, features, drop = FALSE])
 
-  # ---- LASSO ----
   cv_lasso <- glmnet::cv.glmnet(
-    X_mat, y, family = "binomial", alpha = 1, nfolds = n_folds
+    x = X_mat,
+    y = y,
+    family = "binomial",
+    alpha = 1,
+    nfolds = n_folds
   )
 
   coef_mat <- as.matrix(glmnet::coef.glmnet(cv_lasso, s = "lambda.1se"))
-  selected_features <- rownames(coef_mat)[coef_mat[,1] != 0]
+  selected_features <- rownames(coef_mat)[coef_mat[, 1] != 0]
   selected_features <- setdiff(selected_features, "(Intercept)")
   final_features <- unique(c(selected_features, covariates))
 
-  # ---- Stratified folds ----
-  fold_id <- split(
-    seq_len(nrow(df)),
-    interaction(y, sample(seq_len(n_folds), nrow(df), replace = TRUE))
-  )
+  if (!any(selected_features %in% protein_features)) {
+    warning(
+      "No protein features were selected by LASSO; model uses covariates only.",
+      call. = FALSE
+    )
+  }
 
-  mean_fpr <- seq(0, 1, length.out = 100)
+  # ------------------ Stratified folds ------------------
+  make_stratified_folds <- function(y, k, seed = NULL) {
+    if (!is.null(seed)) set.seed(seed)
+
+    idx0 <- sample(which(y == 0))
+    idx1 <- sample(which(y == 1))
+
+    split0 <- split(idx0, rep(seq_len(k), length.out = length(idx0)))
+    split1 <- split(idx1, rep(seq_len(k), length.out = length(idx1)))
+
+    folds <- vector("list", k)
+    for (i in seq_len(k)) {
+      folds[[i]] <- c(split0[[i]], split1[[i]])
+    }
+    folds
+  }
+
+  folds <- make_stratified_folds(y, n_folds, seed)
+
+  # ------------------ CV ROC ------------------
+  mean_fpr <- seq(0, 1, length.out = 200)
   tprs <- list()
   aucs <- numeric()
 
-  for (idx in fold_id) {
-    train_idx <- setdiff(seq_len(nrow(df)), idx)
-    test_idx <- idx
+  for (i in seq_along(folds)) {
+    test_idx <- folds[[i]]
+    train_idx <- setdiff(seq_len(nrow(df)), test_idx)
 
     y_test <- y[test_idx]
     if (length(unique(y_test)) < 2) next
@@ -97,9 +123,9 @@ plot_lasso_cv_roc <- function(
       family = stats::binomial()
     )
 
-    prob <- as.numeric(stats::predict(
-      fit, newdata = data.frame(X_test), type = "response"
-    ))
+    prob <- as.numeric(
+      stats::predict(fit, newdata = data.frame(X_test), type = "response")
+    )
 
     roc_obj <- pROC::roc(y_test, prob, quiet = TRUE)
     aucs <- c(aucs, as.numeric(pROC::auc(roc_obj)))
@@ -107,13 +133,16 @@ plot_lasso_cv_roc <- function(
     interp <- stats::approx(
       x = 1 - roc_obj$specificities,
       y = roc_obj$sensitivities,
-      xout = mean_fpr
+      xout = mean_fpr,
+      ties = "ordered",
+      rule = 2
     )$y
+
     interp[1] <- 0
     tprs[[length(tprs) + 1]] <- interp
   }
 
-  # ---- Handle test edge case ----
+  # ------------------ Edge case ------------------
   if (length(aucs) == 0) {
     warning("All CV folds had a single outcome class; ROC not computed.")
     return(list(
@@ -126,26 +155,39 @@ plot_lasso_cv_roc <- function(
     ))
   }
 
+  # ------------------ Aggregate ROC ------------------
   mean_tpr <- Reduce("+", tprs) / length(tprs)
   mean_tpr[length(mean_tpr)] <- 1
 
   mean_auc <- mean(aucs)
   sd_auc <- stats::sd(aucs)
 
-  plot_df <- data.frame(FPR = mean_fpr, TPR = mean_tpr)
+  plot_df <- data.frame(
+    FPR = mean_fpr,
+    TPR = mean_tpr
+  )
+  plot_df <- plot_df[stats::complete.cases(plot_df), ]
 
-  p <- ggplot2::ggplot(plot_df, ggplot2::aes(FPR, TPR)) +
-    ggplot2::geom_line(color = "#80796B", linewidth = 1.6) +
-    ggplot2::geom_abline(linetype = "dashed") +
+  # ------------------ Plot ------------------
+  p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = FPR, y = TPR)) +
+    ggplot2::geom_line(color = "#B24745", linewidth = 1.8, alpha = 0.95) +
+    ggplot2::geom_abline(
+      slope = 1, intercept = 0,
+      linetype = "dashed", color = "black", linewidth = 0.8
+    ) +
     ggplot2::labs(
       title = title,
       subtitle = sprintf("Mean AUC = %.3f ± %.3f", mean_auc, sd_auc),
       x = "1 – Specificity",
       y = "Sensitivity"
     ) +
-    ggplot2::theme_minimal()
+    ggplot2::theme_minimal(base_size = 16) +
+    ggplot2::theme(
+      plot.title = ggplot2::element_text(face = "bold"),
+      panel.grid.minor = ggplot2::element_blank()
+    )
 
-  if (export) {
+  if (isTRUE(export)) {
     ggplot2::ggsave(export_path, p, width = 7, height = 6, dpi = 300)
   }
 

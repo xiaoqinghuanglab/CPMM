@@ -3,30 +3,31 @@ test_that("plot_lasso_cv_roc runs and returns expected structure", {
   skip_if_not_installed("glmnet")
   skip_if_not_installed("pROC")
   skip_on_cran()
-  set.seed(1)
 
-  # ---- Synthetic dataset ----
-  n <- 60
+  set.seed(123)
+
+  # ---- Synthetic dataset (balanced, CV-safe) ----
+  n_per_class <- 50
+  n <- n_per_class * 2
+
   df <- data.frame(
-    P1 = rnorm(n),
-    P2 = rnorm(n),
+    P1 = c(rnorm(n_per_class,  0.5), rnorm(n_per_class, -0.5)),
+    P2 = c(rnorm(n_per_class,  0.3), rnorm(n_per_class, -0.3)),
     P3 = rnorm(n),
     PROCEDURE_AGE = rnorm(n, 65, 6),
     Sex_bin = sample(c(0, 1), n, replace = TRUE),
-    label = rep(c(0, 1), length.out = n)
+    label = rep(c(0, 1), each = n_per_class)
   )
 
-  # ---- Run function (allow warning for small folds) ----
-  res <- suppressWarnings(
-    plot_lasso_cv_roc(
-      df = df,
-      protein_features = c("P1", "P2", "P3"),
-      covariates = c("PROCEDURE_AGE", "Sex_bin"),
-      label_col = "label",
-      n_folds = 5,
-      title = "Test ROC",
-      export = FALSE
-    )
+  # ---- Run function ----
+  res <- plot_lasso_cv_roc(
+    df = df,
+    protein_features = c("P1", "P2", "P3"),
+    covariates = c("PROCEDURE_AGE", "Sex_bin"),
+    label_col = "label",
+    n_folds = 5,
+    title = "Test ROC",
+    export = FALSE
   )
 
   # ---- Structural checks ----
@@ -45,10 +46,12 @@ test_that("plot_lasso_cv_roc runs and returns expected structure", {
   expect_type(res$selected_features, "character")
   expect_type(res$final_features, "character")
 
-  # ---- AUC outputs (may be NA in edge cases) ----
-  expect_true(is.numeric(res$mean_auc) || is.na(res$mean_auc))
-  expect_true(is.numeric(res$sd_auc)   || is.na(res$sd_auc))
-  expect_type(res$fold_aucs, "double")
+  # ---- AUC outputs ----
+  expect_type(res$mean_auc, "double")
+  expect_type(res$sd_auc, "double")
+  expect_true(is.finite(res$mean_auc))
+  expect_true(res$mean_auc > 0.5)
+  expect_length(res$fold_aucs, 5)
 
   # ---- Plot ----
   expect_s3_class(res$plot, "ggplot")
