@@ -183,7 +183,7 @@ plot_cpmm(
   years_since_onset_col = "years_since_onset"
 )
 ```
-![Protein Trajectories](./assets/cplmm_plot.png)
+![Protein Trajectories](./assets/cpmm_plot.png)
 
 ### Volcano Plot
 
@@ -421,6 +421,7 @@ For detailed function documentation, use:
 ?compute_wald_test
 # ... and other function names
 ```
+
 
 
 
