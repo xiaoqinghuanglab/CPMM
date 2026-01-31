@@ -19,7 +19,7 @@
 
 ``` r
 # Install from GitHub 
-devtools::install_github("xiaoqinghuanglab/CPLMM")
+devtools::install_github("xiaoqinghuanglab/CPMM")
 library(CPMM)
 ```
 
@@ -421,6 +421,7 @@ For detailed function documentation, use:
 ?compute_wald_test
 # ... and other function names
 ```
+
 
 
 
