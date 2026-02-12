@@ -295,7 +295,7 @@ plot_km_with_threshold(
     Status_change = list(df = df_status_change),
     SCD = list(
       df = df_status_change,
-      filter = CATEGORY == "SCD"
+      filter = quote(CATEGORY == "SCD")
     )
   ),
   time_points = seq(-6, 6, by = 2)
@@ -421,6 +421,7 @@ For detailed function documentation, use:
 ?compute_wald_test
 # ... and other function names
 ```
+
 
 
 
