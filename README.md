@@ -66,7 +66,7 @@ All the data frames must contain same numbers of proteins
 This Code shows how to get started with fitting the model for all the proteins/genes, visualize them and run Wald test on the results for a toy dataet
 
 ``` r
-library(RPackage)
+library(CPMM)
 
 # Load your data
 df_all <- read.csv("./data/df_all_toy.csv")
@@ -421,6 +421,7 @@ For detailed function documentation, use:
 ?compute_wald_test
 # ... and other function names
 ```
+
 
 
 
