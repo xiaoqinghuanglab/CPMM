@@ -6,7 +6,7 @@ Authors@R:
 Description: Tools to preprocess longitudinal datasets, fit change-point mixed models
     around disease onset, run Wald / Mann-Whitney tests, Kaplan-Meier threshold analyses,
     and generate publication-ready visualizations.
-License: `use_mit_license()`, `use_gpl3_license()`
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -18,14 +18,14 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
-    dplyr,
-    ggplot2,
+    dplyr (>= 1.1.4),
+    ggplot2 (>= 3.4.0),
     lme4,
     lmerTest,
     patchwork,
-    rlang,
+    rlang (>= 1.1.7),
     survival,
     survminer,
-    tibble,
-    tidyr
+    tibble (>= 3.2.1),
+    tidyr (>= 1.3.0)
 VignetteBuilder: knitr
