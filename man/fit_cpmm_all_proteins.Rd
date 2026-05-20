@@ -9,34 +9,53 @@ fit_cpmm_all_proteins(
   protein_list,
   covariates = c("SEX", "BASELINE_AGE"),
   subject_id_col = "SUBID",
-  years_since_onset_col = "years_since_onset"
+  years_since_onset_col = "years_since_onset",
+  change_point = 0,
+  reml = TRUE
 )
 }
 \arguments{
-\item{df_status_change}{Data frame for status-change subjects only.}
+\item{df_status_change}{Data frame containing status-change subjects only.}
 
 \item{protein_list}{Character vector of protein column names.}
 
-\item{covariates}{Fixed-effect covariates. Default c("SEX","BASELINE_AGE").}
+\item{covariates}{Fixed-effect covariates. Default is c("SEX", "BASELINE_AGE").}
 
-\item{subject_id_col}{Subject ID column. Default "SUBID".}
+\item{subject_id_col}{Subject ID column. Default is "SUBID".}
 
-\item{years_since_onset_col}{Years-since-onset column. Default "years_since_onset".}
+\item{years_since_onset_col}{Years-since-onset column. Default is "years_since_onset".}
+
+\item{change_point}{Numeric change point. Default is 0.}
+
+\item{reml}{Logical; whether to fit models using REML. Default is TRUE.}
 }
 \value{
-A tibble with one row per protein containing Beta 1–2, SEs,
-intercept, and model fit metrics.
+A tibble with one row per protein containing CPMM coefficients,
+slope-change contrast estimates, confidence intervals, and model-fit metrics.
 }
 \description{
-Fits a random-intercept CPMM per protein
+Fits a random-intercept CPMM for each protein in status-change subjects:
 }
 \details{
 protein ~ before_onset + after_onset + covariates + (1 | subject_id)
 
-The change point is fixed at 0 on \code{years_since_onset_col}.
-Piecewise terms are defined as:
-\itemize{
-\item before_onset = pmax(0, -years_since_onset)
-\item after_onset  = pmax(0,  years_since_onset)
-}
+The change point is fixed at 0 on the years-since-onset scale.
+
+Piecewise predictors are defined as:
+before_onset = pmax(0, 0 - years_since_onset)
+after_onset  = pmax(0, years_since_onset - 0)
+
+The raw coefficient for before_onset is sign-flipped to produce the
+interpretable pre-onset slope:
+
+Beta 1 = -Beta Before Raw
+Beta 2 =  Beta After Raw
+
+The slope-change contrast is:
+
+Delta = Beta After Raw + Beta Before Raw
+
+which is equivalent to:
+
+Delta = Beta 2 - Beta 1
 }

@@ -6,3 +6,5 @@
 ^LICENSE\.md$
 ^zip$
 ^\\.github$
+^\.positai$
+^\.claude$
