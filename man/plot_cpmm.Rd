@@ -2,49 +2,65 @@
 % Please edit documentation in R/viz_cpmm.R
 \name{plot_cpmm}
 \alias{plot_cpmm}
-\title{Plot CPMM trajectory}
+\title{Plot CPMM trajectories across one or more cohorts}
 \usage{
 plot_cpmm(
-  df_status_change,
+  cohort_dfs,
   protein,
   covariates = c("SEX", "BASELINE_AGE"),
-  years_since_onset_col = "years_since_onset",
   subject_id_col = "SUBID",
-  main_color = "#B24745",
+  years_since_onset_col = "years_since_onset",
+  cohort_colors = NULL,
   export = FALSE,
-  export_dir = "Figures",
-  export_formats = c("pdf", "svg")
+  outpath = NULL,
+  remove_outliers_for_plot = FALSE,
+  outlier_method = "iqr",
+  show_spaghetti = TRUE,
+  n_points = 100
 )
 }
 \arguments{
-\item{df_status_change}{Data frame of status-change (converter) subjects.}
+\item{cohort_dfs}{Named list of cohort data frames. Each list element should
+contain the protein column, subject ID column, years-since-onset column, and
+covariates.}
 
-\item{protein}{Character; protein column name.}
+\item{protein}{Character; protein column name to plot.}
 
-\item{covariates}{Character vector of covariates. Default c("SEX","BASELINE_AGE").}
+\item{covariates}{Character vector of fixed-effect covariates.
+Default is c("SEX", "BASELINE_AGE").}
 
-\item{years_since_onset_col}{Column name. Default "years_since_onset".}
+\item{subject_id_col}{Subject ID column name. Default is "SUBID".}
 
-\item{subject_id_col}{Subject ID column. Default "SUBID".}
+\item{years_since_onset_col}{Years-since-onset column name.
+Default is "years_since_onset".}
 
-\item{main_color}{Line/point color. Default muted red.}
+\item{cohort_colors}{Optional named character vector of colors. Names should
+match names(cohort_dfs). If NULL, ggplot default colors are used.}
 
-\item{export}{Logical; save plot?}
+\item{export}{Logical; whether to save the plot. Default is FALSE.}
 
-\item{export_dir}{Output directory.}
+\item{outpath}{Optional output path. Default is NULL.}
 
-\item{export_formats}{File formats.}
+\item{remove_outliers_for_plot}{Logical; remove outliers from scatter and
+spaghetti layers only. Model fitting is always done on the full available data.
+Default is FALSE.}
+
+\item{outlier_method}{Outlier method. Currently only "iqr" is supported.}
+
+\item{show_spaghetti}{Logical; whether to show subject-level trajectories.
+Default is TRUE.}
+
+\item{n_points}{Number of prediction points per cohort. Default is 100.}
 }
 \value{
 A ggplot object.
 }
 \description{
-Fits a change-point mixed model with a fixed changepoint at 0:
-protein ~ before_onset + after_onset + covariates + (1 | SUBID)
+Fits and overlays cohort-specific CPMM trajectories for one or more cohorts.
+Each cohort is modeled separately using:
 }
 \details{
-Plots:
-• Global fitted CPMM trajectory (population-level prediction)
-• Raw subject-level scatter points (outline only)
-• Vertical onset line at 0
+protein ~ before_onset + after_onset + covariates + (1 | subject_id)
+
+The fitted trajectory represents the population-level fixed-effect prediction.
 }
